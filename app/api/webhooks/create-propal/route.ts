@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { start } from "workflow/api";
 import { z } from "zod";
 import { createPropalWorkflow } from "@/app/workflows/create-propal-workflow";
 
@@ -12,10 +13,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = webhookSchema.parse(body);
 
-    await createPropalWorkflow({
-      qdrantCollectionId: validatedData.qdrantCollectionId,
-      dealSlug: validatedData.dealSlug,
-    });
+    await start(createPropalWorkflow, [
+      {
+        qdrantCollectionId: validatedData.qdrantCollectionId,
+        dealSlug: validatedData.dealSlug,
+      },
+    ]);
 
     return NextResponse.json(
       { success: true, message: "Workflow started" },
