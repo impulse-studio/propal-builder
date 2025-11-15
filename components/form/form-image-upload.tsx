@@ -6,6 +6,7 @@ import {
   RiUploadCloud2Line,
 } from "@remixicon/react";
 import { upload } from "@vercel/blob/client";
+import Image from "next/image";
 import { useCallback, useId, useState } from "react";
 import {
   Controller,
@@ -110,9 +111,10 @@ const ImagePreview = ({
           getAspectRatioClass(previewAspectRatio),
         )}
       >
-        <img
+        <Image
           alt="Uploaded content preview"
           className="h-full w-full object-cover"
+          fill
           src={value}
         />
       </div>
