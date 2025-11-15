@@ -68,6 +68,7 @@ function ReplaceSectionToolComponent({ part }: ReplaceSectionToolProps) {
             </p>
             <div
               className="text-paragraph-sm text-text-strong-950"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML content from AI needs to be rendered
               dangerouslySetInnerHTML={{ __html: input.newContent as string }}
             />
           </div>

@@ -116,5 +116,3 @@ function GetBlockToolComponent({ part }: GetBlockToolProps) {
 }
 
 export const GetBlockTool = memo(GetBlockToolComponent);
-
-

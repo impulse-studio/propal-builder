@@ -107,5 +107,3 @@ function UpdateBlockToolComponent({ part }: UpdateBlockToolProps) {
 }
 
 export const UpdateBlockTool = memo(UpdateBlockToolComponent);
-
-

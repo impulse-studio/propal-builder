@@ -90,5 +90,3 @@ function DeleteBlockToolComponent({ part }: DeleteBlockToolProps) {
 }
 
 export const DeleteBlockTool = memo(DeleteBlockToolComponent);
-
-

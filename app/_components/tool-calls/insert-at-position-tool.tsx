@@ -52,9 +52,7 @@ function InsertAtPositionToolComponent({ part }: InsertAtPositionToolProps) {
         </div>
         <div className="space-y-3">
           <div className="rounded-md bg-bg-white-0 p-3 ring-1 ring-stroke-soft-200">
-            <p className="mb-1 text-paragraph-xs text-text-sub-600">
-              Position
-            </p>
+            <p className="mb-1 text-paragraph-xs text-text-sub-600">Position</p>
             <p className="text-paragraph-sm text-text-strong-950">
               {positionLabels[input.position as keyof typeof positionLabels] ||
                 input.position}
@@ -62,13 +60,13 @@ function InsertAtPositionToolComponent({ part }: InsertAtPositionToolProps) {
           </div>
           {input.anchorText && (
             <div className="rounded-md bg-bg-white-0 p-3 ring-1 ring-stroke-soft-200">
-            <p className="mb-1 text-paragraph-xs text-text-sub-600">
-              Texte de référence
-            </p>
-            <p className="text-paragraph-sm text-text-strong-950">
-              {input.anchorText}
-            </p>
-          </div>
+              <p className="mb-1 text-paragraph-xs text-text-sub-600">
+                Texte de référence
+              </p>
+              <p className="text-paragraph-sm text-text-strong-950">
+                {input.anchorText}
+              </p>
+            </div>
           )}
           <div className="rounded-md bg-bg-white-0 p-3 ring-1 ring-stroke-soft-200">
             <p className="mb-1 text-paragraph-xs text-text-sub-600">
@@ -76,6 +74,7 @@ function InsertAtPositionToolComponent({ part }: InsertAtPositionToolProps) {
             </p>
             <div
               className="text-paragraph-sm text-text-strong-950"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML content from AI needs to be rendered
               dangerouslySetInnerHTML={{ __html: input.content as string }}
             />
           </div>
@@ -120,4 +119,3 @@ function InsertAtPositionToolComponent({ part }: InsertAtPositionToolProps) {
 }
 
 export const InsertAtPositionTool = memo(InsertAtPositionToolComponent);
-
