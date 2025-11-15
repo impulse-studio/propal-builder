@@ -22,6 +22,7 @@ import {
 } from "@/components/custom/proposal-toolbar/slash-cmd";
 import { SlashCommandProvider } from "@/components/custom/proposal-toolbar/slash-command-provider";
 import { cn } from "@/lib/utils";
+import { OfficialDragHandle } from "@/lib/utils/tiptap/drag-handle-extension";
 import { PasteDropExtension } from "@/lib/utils/tiptap/paste-drop-extension";
 import { ResizableImageExtension } from "@/lib/utils/tiptap/resizable-image-extension";
 import { SlashExtension } from "@/lib/utils/tiptap/slash-extension";
@@ -101,6 +102,7 @@ function ProposalEditorContent() {
           genericError: "Failed to upload image",
         },
       }),
+      OfficialDragHandle,
       MarkdownShortcuts,
       PricingCard,
       FeatureList,
