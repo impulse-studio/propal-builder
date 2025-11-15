@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventIteratorToStream } from "@orpc/client";
 import { useCallback, useEffect, useRef } from "react";
@@ -65,6 +66,168 @@ export function ChatPanel() {
           throw new Error("Unsupported");
         },
       },
+      sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+      async onToolCall({ toolCall }) {
+        // Check if it's a dynamic tool first for proper type narrowing
+        if (toolCall.dynamic) {
+          return;
+        }
+
+        // Execute client-side tools immediately
+        switch (toolCall.toolName) {
+          case "findAndReplace": {
+            const { searchText, replaceWith, replaceAll } = toolCall.input;
+            findAndReplace(searchText, replaceWith, replaceAll);
+            addToolOutput({
+              tool: "findAndReplace",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "insertAtPosition": {
+            const { position, content, anchorText } = toolCall.input;
+            insertAtPosition(position, content, anchorText);
+            addToolOutput({
+              tool: "insertAtPosition",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "replaceSection": {
+            const { startText, endText, newContent } = toolCall.input;
+            replaceSection(startText, endText, newContent);
+            addToolOutput({
+              tool: "replaceSection",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "setDocumentContent": {
+            const { content } = toolCall.input;
+            replaceContent(content);
+            addToolOutput({
+              tool: "setDocumentContent",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "deleteText": {
+            const { textToDelete, deleteAll } = toolCall.input;
+            deleteText(textToDelete, deleteAll);
+            addToolOutput({
+              tool: "deleteText",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "getDocumentContent": {
+            const content = getJSON();
+            addToolOutput({
+              tool: "getDocumentContent",
+              toolCallId: toolCall.toolCallId,
+              output: content || {},
+            });
+            break;
+          }
+          case "insertPricingCard": {
+            const { title, price, period, features, highlighted } = toolCall.input;
+            insertPricingCard({
+              title,
+              price,
+              period,
+              features,
+              highlighted,
+            });
+            addToolOutput({
+              tool: "insertPricingCard",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "insertFeatureList": {
+            const { title, features } = toolCall.input;
+            insertFeatureList({
+              title,
+              features,
+            });
+            addToolOutput({
+              tool: "insertFeatureList",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "insertCallToAction": {
+            const { title, description, buttonText, buttonLink } = toolCall.input;
+            insertCallToAction({
+              title,
+              description,
+              buttonText,
+              buttonLink,
+            });
+            addToolOutput({
+              tool: "insertCallToAction",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "updateBlock": {
+            const { nodeIndex, attrs } = toolCall.input;
+            updateBlock(nodeIndex, attrs);
+            addToolOutput({
+              tool: "updateBlock",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "deleteBlock": {
+            const { nodeIndex } = toolCall.input;
+            deleteBlock(nodeIndex);
+            addToolOutput({
+              tool: "deleteBlock",
+              toolCallId: toolCall.toolCallId,
+              output: undefined,
+            });
+            break;
+          }
+          case "getBlock": {
+            const { nodeIndex } = toolCall.input;
+            const block = getBlock(nodeIndex);
+            const outputBlock =
+              block && "type" in block && "attrs" in block
+                ? (block as {
+                    type: string;
+                    attrs: Record<string, unknown>;
+                    content?: unknown;
+                  })
+                : { type: "unknown", attrs: {}, content: undefined };
+            addToolOutput({
+              tool: "getBlock",
+              toolCallId: toolCall.toolCallId,
+              output: outputBlock,
+            });
+            break;
+          }
+          case "getAllBlocks": {
+            const { blockType } = toolCall.input;
+            const blocks = getAllBlocks(blockType);
+            addToolOutput({
+              tool: "getAllBlocks",
+              toolCallId: toolCall.toolCallId,
+              output: blocks,
+            });
+            break;
+          }
+        }
+      },
       onData: (dataPart) => {
         if (dataPart.type === "data-sessionId") {
           const sessionData = dataPart.data as { sessionId: string };
@@ -72,303 +235,6 @@ export function ChatPanel() {
         }
       },
     });
-
-  // Process tool calls from messages (needed for custom transport)
-  const processedToolCallsRef = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    messages.forEach((message) => {
-      if (message.role === "assistant") {
-        message.parts.forEach((part) => {
-          // Check for tool parts that need execution
-          if (
-            (part.type.startsWith("tool-") || part.type === "dynamic-tool") &&
-            "state" in part &&
-            part.state === "input-available" &&
-            "toolCallId" in part
-          ) {
-            const toolCallId = part.toolCallId as string;
-
-            // Skip if already processed
-            if (processedToolCallsRef.current.has(toolCallId)) {
-              return;
-            }
-
-            processedToolCallsRef.current.add(toolCallId);
-
-            // Execute tool based on type
-            try {
-              if (part.type === "tool-findAndReplace" && "input" in part) {
-                const input = part.input as {
-                  searchText: string;
-                  replaceWith: string;
-                  replaceAll?: boolean;
-                };
-                findAndReplace(
-                  input.searchText,
-                  input.replaceWith,
-                  input.replaceAll,
-                );
-                addToolOutput({
-                  tool: "findAndReplace",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-insertAtPosition" &&
-                "input" in part
-              ) {
-                const input = part.input as {
-                  position: "start" | "end" | "after" | "before";
-                  content: string;
-                  anchorText?: string;
-                };
-                insertAtPosition(
-                  input.position,
-                  input.content,
-                  input.anchorText,
-                );
-                addToolOutput({
-                  tool: "insertAtPosition",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-replaceSection" &&
-                "input" in part
-              ) {
-                const input = part.input as {
-                  startText: string;
-                  endText?: string;
-                  newContent: string;
-                };
-                replaceSection(
-                  input.startText,
-                  input.endText,
-                  input.newContent,
-                );
-                addToolOutput({
-                  tool: "replaceSection",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-setDocumentContent" &&
-                "input" in part
-              ) {
-                const input = part.input as { content: string };
-                replaceContent(input.content);
-                addToolOutput({
-                  tool: "setDocumentContent",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (part.type === "tool-deleteText" && "input" in part) {
-                const input = part.input as {
-                  textToDelete: string;
-                  deleteAll?: boolean;
-                };
-                deleteText(input.textToDelete, input.deleteAll);
-                addToolOutput({
-                  tool: "deleteText",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-getDocumentContent" &&
-                "input" in part
-              ) {
-                const content = getJSON();
-                addToolOutput({
-                  tool: "getDocumentContent",
-                  toolCallId,
-                  state: "output-available",
-                  output: content || {},
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-insertPricingCard" &&
-                "input" in part
-              ) {
-                const input = part.input as {
-                  title?: string;
-                  price?: string;
-                  period?: string;
-                  features?: string[];
-                  highlighted?: boolean;
-                  position?: "start" | "end" | "after" | "before";
-                  anchorText?: string;
-                };
-                // Note: Position handling would require cursor positioning
-                // For now, blocks are inserted at cursor position (default: end)
-                insertPricingCard({
-                  title: input.title,
-                  price: input.price,
-                  period: input.period,
-                  features: input.features,
-                  highlighted: input.highlighted,
-                });
-                addToolOutput({
-                  tool: "insertPricingCard",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-insertFeatureList" &&
-                "input" in part
-              ) {
-                const input = part.input as {
-                  title?: string;
-                  features?: string[];
-                  position?: "start" | "end" | "after" | "before";
-                  anchorText?: string;
-                };
-                insertFeatureList({
-                  title: input.title,
-                  features: input.features,
-                });
-                addToolOutput({
-                  tool: "insertFeatureList",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (
-                part.type === "tool-insertCallToAction" &&
-                "input" in part
-              ) {
-                const input = part.input as {
-                  title?: string;
-                  description?: string;
-                  buttonText?: string;
-                  buttonLink?: string;
-                  position?: "start" | "end" | "after" | "before";
-                  anchorText?: string;
-                };
-                insertCallToAction({
-                  title: input.title,
-                  description: input.description,
-                  buttonText: input.buttonText,
-                  buttonLink: input.buttonLink,
-                });
-                addToolOutput({
-                  tool: "insertCallToAction",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (part.type === "tool-updateBlock" && "input" in part) {
-                const input = part.input as {
-                  nodeIndex: number;
-                  attrs: Record<string, unknown>;
-                };
-                updateBlock(input.nodeIndex, input.attrs);
-                addToolOutput({
-                  tool: "updateBlock",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (part.type === "tool-deleteBlock" && "input" in part) {
-                const input = part.input as { nodeIndex: number };
-                deleteBlock(input.nodeIndex);
-                addToolOutput({
-                  tool: "deleteBlock",
-                  toolCallId,
-                  state: "output-available",
-                  output: undefined,
-                  errorText: undefined,
-                });
-              } else if (part.type === "tool-getBlock" && "input" in part) {
-                const input = part.input as { nodeIndex: number };
-                const block = getBlock(input.nodeIndex);
-                const outputBlock =
-                  block && "type" in block && "attrs" in block
-                    ? (block as {
-                        type: string;
-                        attrs: Record<string, unknown>;
-                        content?: unknown;
-                      })
-                    : { type: "unknown", attrs: {}, content: undefined };
-                addToolOutput({
-                  tool: "getBlock",
-                  toolCallId,
-                  state: "output-available",
-                  output: outputBlock,
-                  errorText: undefined,
-                });
-              } else if (part.type === "tool-getAllBlocks" && "input" in part) {
-                const input = part.input as { blockType?: string };
-                const blocks = getAllBlocks(input.blockType);
-                addToolOutput({
-                  tool: "getAllBlocks",
-                  toolCallId,
-                  state: "output-available",
-                  output: blocks,
-                  errorText: undefined,
-                });
-              }
-            } catch (error) {
-              console.error("Error executing tool:", error);
-              const toolName = part.type.replace("tool-", "") as
-                | "findAndReplace"
-                | "insertAtPosition"
-                | "replaceSection"
-                | "setDocumentContent"
-                | "deleteText"
-                | "getDocumentContent"
-                | "insertPricingCard"
-                | "insertFeatureList"
-                | "insertCallToAction"
-                | "updateBlock"
-                | "deleteBlock"
-                | "getBlock"
-                | "getAllBlocks";
-              addToolOutput({
-                tool: toolName,
-                toolCallId,
-                state: "output-error",
-                errorText:
-                  error instanceof Error ? error.message : "Unknown error",
-              });
-            }
-          }
-        });
-      }
-    });
-  }, [
-    messages,
-    findAndReplace,
-    insertAtPosition,
-    replaceSection,
-    replaceContent,
-    deleteText,
-    getContent,
-    getJSON,
-    insertPricingCard,
-    insertFeatureList,
-    insertCallToAction,
-    updateBlock,
-    deleteBlock,
-    getBlock,
-    getAllBlocks,
-    addToolOutput,
-  ]);
 
   const { setValue, getValues } = useForm<InputSchema>({
     resolver: zodResolver(inputSchema),
