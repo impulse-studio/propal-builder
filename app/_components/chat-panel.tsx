@@ -271,6 +271,22 @@ export function ChatPanel() {
     });
   }, [getValues, isLoading, sendMessage]);
 
+  const handleSendMessage = useCallback(
+    (message: string) => {
+      const trimmed = message.trim();
+
+      if (!trimmed || isLoading) {
+        return;
+      }
+
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text: trimmed }],
+      });
+    },
+    [isLoading, sendMessage],
+  );
+
   const getReasoningParts = (message: ChatUIMessage) => {
     return message.parts.filter(
       (
@@ -299,7 +315,7 @@ export function ChatPanel() {
     <div className="flex h-full flex-col bg-bg-white-0">
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <ChatEmptyState />
+          <ChatEmptyState onSendMessage={handleSendMessage} />
         ) : (
           <div className="space-y-4">
             {messages.map((message, index) => {

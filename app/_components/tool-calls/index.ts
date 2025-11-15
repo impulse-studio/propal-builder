@@ -1,3 +1,4 @@
+export { AskKnowledgeTool } from "./ask-knowledge-tool";
 export { DeleteBlockTool } from "./delete-block-tool";
 export { DeleteTextTool } from "./delete-text-tool";
 export { FindAndReplaceTool } from "./find-and-replace-tool";

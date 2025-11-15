@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { ChatUIMessage } from "@/server/routers/chat/types";
 import {
+  AskKnowledgeTool,
   DeleteBlockTool,
   DeleteTextTool,
   FindAndReplaceTool,
@@ -76,6 +77,9 @@ function ToolCallDisplayComponent({ part }: ToolCallDisplayProps) {
 
     case "tool-getClientInfo":
       return <GetClientInfoTool part={part} />;
+
+    case "tool-askKnowledge":
+      return <AskKnowledgeTool part={part} />;
 
     case "dynamic-tool": {
       // Fallback for dynamic tools
