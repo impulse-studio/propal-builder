@@ -15,7 +15,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <InspxProvider>
-      <ThemeProvider attribute="class">
+      <ThemeProvider attribute="class" defaultTheme="light">
         <QueryClientProvider client={queryClient}>
           <NuqsAdapter>
             <TooltipProvider>{children}</TooltipProvider>
