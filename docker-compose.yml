@@ -6,7 +6,7 @@ services:
     postgres:
         # you can connect with e.g.
         # psql -h localhost -p 5555 -U postgres -d db
-        image: postgres
+        image: postgres:17
         restart: always
         volumes:
             - postgres_data:/var/lib/postgresql/data
@@ -16,4 +16,3 @@ services:
             POSTGRES_DB: db
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
-
