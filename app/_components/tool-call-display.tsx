@@ -8,6 +8,7 @@ import {
   FindAndReplaceTool,
   GetAllBlocksTool,
   GetBlockTool,
+  GetClientInfoTool,
   GetDocumentContentTool,
   InsertAtPositionTool,
   InsertCallToActionTool,
@@ -72,6 +73,9 @@ function ToolCallDisplayComponent({ part }: ToolCallDisplayProps) {
 
     case "tool-getAllBlocks":
       return <GetAllBlocksTool part={part} />;
+
+    case "tool-getClientInfo":
+      return <GetClientInfoTool part={part} />;
 
     case "dynamic-tool": {
       // Fallback for dynamic tools

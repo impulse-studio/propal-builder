@@ -11,6 +11,8 @@ export const env = createEnv({
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
     VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
     VERCEL_BRANCH_URL: z.string().optional(),
+    QDRANT_URL: z.string().url().optional(),
+    QDRANT_API_KEY: z.string().optional(),
   },
   client: {},
   experimental__runtimeEnv: {},

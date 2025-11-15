@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { getClientInfo } from "@/lib/qdrant/client";
 
 export const editorTools = {
   findAndReplace: tool({
@@ -269,5 +270,57 @@ export const editorTools = {
         }),
       )
       .describe("Liste de tous les blocs avec leur index, type et attributs"),
+  }),
+
+  getClientInfo: tool({
+    description:
+      "Récupère les informations d'un client depuis la base de données vectorielle Qdrant. Utilisez cette fonction pour obtenir les détails d'un client spécifique par son identifiant.",
+    inputSchema: z.object({
+      clientId: z
+        .string()
+        .describe("L'identifiant unique du client à récupérer"),
+      collectionName: z
+        .string()
+        .optional()
+        .describe(
+          "Le nom de la collection Qdrant contenant les informations des clients (par défaut: 'clients')",
+        ),
+    }),
+    outputSchema: z
+      .union([
+        z.object({
+          id: z
+            .union([z.string(), z.number()])
+            .describe("L'ID du point dans Qdrant"),
+          payload: z
+            .object({})
+            .loose()
+            .describe("Les informations du client (nom, email, etc.)"),
+          vector: z
+            .union([
+              z.array(z.number()),
+              z.array(z.array(z.number())),
+              z.record(z.string(), z.unknown()),
+            ])
+            .nullable()
+            .optional()
+            .describe("Le vecteur associé au client (si disponible)"),
+        }),
+        z.null(),
+      ])
+      .describe(
+        "Les informations du client trouvé, ou null si le client n'existe pas",
+      ),
+    execute: async ({ clientId, collectionName = "clients" }) => {
+      try {
+        const result = await getClientInfo(clientId, collectionName);
+        return result;
+      } catch (error) {
+        console.error("Erreur lors de l'exécution de getClientInfo:", error);
+        throw new Error(
+          `Impossible de récupérer les informations du client: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+        );
+      }
+    },
   }),
 };
