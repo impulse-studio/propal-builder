@@ -20,6 +20,9 @@ importers:
       '@elevenlabs/client':
         specifier: ^0.11.0
         version: 0.11.0(@types/dom-mediacapture-record@1.0.22)
+      '@elevenlabs/elevenlabs-js':
+        specifier: ^2.24.1
+        version: 2.24.1
       '@elevenlabs/react':
         specifier: ^0.11.0
         version: 0.11.0(@types/dom-mediacapture-record@1.0.22)(react@19.2.0)
@@ -34,7 +37,7 @@ importers:
         version: 1.11.2(@opentelemetry/api@1.9.0)
       '@orpc/server':
         specifier: ^1.11.2
-        version: 1.11.2(@opentelemetry/api@1.9.0)
+        version: 1.11.2(@opentelemetry/api@1.9.0)(ws@8.18.3)
       '@orpc/tanstack-query':
         specifier: ^1.11.2
         version: 1.11.2(@opentelemetry/api@1.9.0)(@orpc/client@1.11.2(@opentelemetry/api@1.9.0))(@tanstack/query-core@5.90.9)
@@ -431,6 +434,10 @@ packages:
 
   '@elevenlabs/client@0.11.0':
     resolution: {integrity: sha512-VBIUfAI8DfFkJf4qanUaE1xd52o/ELYiXm6wGpqsuX5OLDrxpfgQeUKlc5Mwb+RWwGxVC6/9VdcQY14RJpAuSg==}
+
+  '@elevenlabs/elevenlabs-js@2.24.1':
+    resolution: {integrity: sha512-i6bDExgK9lYne1vLhy85JJ3O8bNi5vPTfcgq8kT3HG4+3rgkUJtg5UP29Mn1KONc4ZOeYUomzxJ820uLkT9z6g==}
+    engines: {node: '>=18.0.0'}
 
   '@elevenlabs/react@0.11.0':
     resolution: {integrity: sha512-rjd1aKFnfIrPTwZ6BRIBYrJQdc91+vxtwG+AZdlec8ZGNmK054qrxJl9iMN3uLSz8oKy4YszgszfvZaI1RI5ww==}
@@ -2841,6 +2848,9 @@ packages:
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
 
+  command-exists@1.2.9:
+    resolution: {integrity: sha512-LTQ/SGc+s0Xc0Fu5WaKnR0YiygZkm9eKFvyS+fRsU7/ZWFF8ykFM6Pc9aCVf1+xasOOZpO3BAVgVrKvsqKHV7w==}
+
   concurrently@9.2.1:
     resolution: {integrity: sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==}
     engines: {node: '>=18'}
@@ -3442,6 +3452,15 @@ packages:
       sass:
         optional: true
 
+  node-fetch@2.7.0:
+    resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
+
   normalize-wheel@1.0.1:
     resolution: {integrity: sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==}
 
@@ -3841,6 +3860,9 @@ packages:
     resolution: {integrity: sha512-nt6AMGKW1p/70DF/hGBdJB57B8Tspmbp5gfJ8ilhLnt7kkr2ye7hzD6NVG8GGErk2HWF34igrL2CXmNIkzKqKw==}
     engines: {node: '>=18'}
 
+  tr46@0.0.3:
+    resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
   tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
@@ -3940,13 +3962,31 @@ packages:
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
 
+  webidl-conversions@3.0.1:
+    resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
+
   webrtc-adapter@9.0.3:
     resolution: {integrity: sha512-5fALBcroIl31OeXAdd1YUntxiZl1eHlZZWzNg3U4Fn+J9/cGL3eT80YlrsWGvj2ojuz1rZr2OXkgCzIxAZ7vRQ==}
     engines: {node: '>=6.0.0', npm: '>=3.10.0'}
 
+  whatwg-url@5.0.0:
+    resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
+
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
+
+  ws@8.18.3:
+    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -4080,6 +4120,16 @@ snapshots:
       livekit-client: 2.15.16(@types/dom-mediacapture-record@1.0.22)
     transitivePeerDependencies:
       - '@types/dom-mediacapture-record'
+
+  '@elevenlabs/elevenlabs-js@2.24.1':
+    dependencies:
+      command-exists: 1.2.9
+      node-fetch: 2.7.0
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - utf-8-validate
 
   '@elevenlabs/react@0.11.0(@types/dom-mediacapture-record@1.0.22)(react@19.2.0)':
     dependencies:
@@ -4496,7 +4546,7 @@ snapshots:
 
   '@orpc/interop@1.11.2': {}
 
-  '@orpc/server@1.11.2(@opentelemetry/api@1.9.0)':
+  '@orpc/server@1.11.2(@opentelemetry/api@1.9.0)(ws@8.18.3)':
     dependencies:
       '@orpc/client': 1.11.2(@opentelemetry/api@1.9.0)
       '@orpc/contract': 1.11.2(@opentelemetry/api@1.9.0)
@@ -4509,6 +4559,8 @@ snapshots:
       '@orpc/standard-server-node': 1.11.2(@opentelemetry/api@1.9.0)
       '@orpc/standard-server-peer': 1.11.2(@opentelemetry/api@1.9.0)
       cookie: 1.0.2
+    optionalDependencies:
+      ws: 8.18.3
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - fastify
@@ -6810,6 +6862,8 @@ snapshots:
 
   comma-separated-tokens@2.0.3: {}
 
+  command-exists@1.2.9: {}
+
   concurrently@9.2.1:
     dependencies:
       chalk: 4.1.2
@@ -7535,6 +7589,10 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
+  node-fetch@2.7.0:
+    dependencies:
+      whatwg-url: 5.0.0
+
   normalize-wheel@1.0.1: {}
 
   nuqs@2.7.3(next@16.0.3(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0):
@@ -8077,6 +8135,8 @@ snapshots:
 
   throttleit@2.1.0: {}
 
+  tr46@0.0.3: {}
+
   tree-kill@1.2.2: {}
 
   trim-lines@3.0.1: {}
@@ -8178,15 +8238,24 @@ snapshots:
 
   w3c-keyname@2.2.8: {}
 
+  webidl-conversions@3.0.1: {}
+
   webrtc-adapter@9.0.3:
     dependencies:
       sdp: 3.2.1
+
+  whatwg-url@5.0.0:
+    dependencies:
+      tr46: 0.0.3
+      webidl-conversions: 3.0.1
 
   wrap-ansi@7.0.0:
     dependencies:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+
+  ws@8.18.3: {}
 
   xtend@4.0.2: {}
 
