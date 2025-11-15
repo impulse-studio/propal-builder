@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { getClientInfo } from "@/lib/qdrant/client";
+import { getClientInfo, semanticSearch } from "@/lib/qdrant/client";
 
 export const editorTools = {
   findAndReplace: tool({
@@ -279,12 +279,6 @@ export const editorTools = {
       clientId: z
         .string()
         .describe("L'identifiant unique du client à récupérer"),
-      collectionName: z
-        .string()
-        .optional()
-        .describe(
-          "Le nom de la collection Qdrant contenant les informations des clients (par défaut: 'clients')",
-        ),
     }),
     outputSchema: z
       .union([
@@ -311,9 +305,9 @@ export const editorTools = {
       .describe(
         "Les informations du client trouvé, ou null si le client n'existe pas",
       ),
-    execute: async ({ clientId, collectionName = "clients" }) => {
+    execute: async ({ clientId }) => {
       try {
-        const result = await getClientInfo(clientId, collectionName);
+        const result = await getClientInfo(clientId, "plateforme-web-refurb");
         return result;
       } catch (error) {
         console.error("Erreur lors de l'exécution de getClientInfo:", error);
@@ -323,4 +317,107 @@ export const editorTools = {
       }
     },
   }),
+
+  askKnowledge: tool({
+    description:
+      "Effectue une recherche sémantique dans la base de connaissances Qdrant pour trouver des informations pertinentes sur la propale, les clients ou tout autre contenu. Utilisez cette fonction pour récupérer du contexte ou des informations stockées dans la base de données vectorielle.",
+    inputSchema: z.object({
+      query: z
+        .string()
+        .describe(
+          "La requête texte pour rechercher des informations pertinentes dans la base de connaissances",
+        ),
+      limit: z
+        .number()
+        .optional()
+        .default(5)
+        .describe("Nombre maximum de résultats à retourner (par défaut: 5)"),
+    }),
+    outputSchema: z
+      .array(
+        z.object({
+          id: z
+            .union([z.string(), z.number()])
+            .describe("L'ID du document dans Qdrant"),
+          score: z
+            .number()
+            .describe(
+              "Score de similarité (plus élevé = plus pertinent, entre 0 et 1)",
+            ),
+          payload: z
+            .object({})
+            .loose()
+            .describe("Le contenu du document trouvé"),
+        }),
+      )
+      .describe(
+        "Liste des documents trouvés, triés par pertinence (score décroissant)",
+      ),
+    execute: async ({ query, limit = 5 }) => {
+      try {
+        const results = await semanticSearch(query, "clients", limit);
+        return results;
+      } catch (error) {
+        console.error("Erreur lors de l'exécution de askKnowledge:", error);
+        throw new Error(
+          `Impossible d'effectuer la recherche dans la base de connaissances: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+        );
+      }
+    },
+  }),
 };
+
+export function createEditorTools(collectionName: string) {
+  return {
+    ...editorTools,
+    getClientInfo: tool({
+      description:
+        "Récupère les informations d'un client depuis la base de données vectorielle Qdrant. Utilisez cette fonction pour obtenir les détails d'un client spécifique par son identifiant.",
+      inputSchema: z.object({
+        clientId: z
+          .string()
+          .describe("L'identifiant unique du client à récupérer"),
+      }),
+      outputSchema: editorTools.getClientInfo.outputSchema,
+      execute: async ({ clientId }) => {
+        try {
+          const result = await getClientInfo(clientId, collectionName);
+          return result;
+        } catch (error) {
+          console.error("Erreur lors de l'exécution de getClientInfo:", error);
+          throw new Error(
+            `Impossible de récupérer les informations du client: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+          );
+        }
+      },
+    }),
+    askKnowledge: tool({
+      description:
+        "Effectue une recherche sémantique dans la base de connaissances Qdrant pour trouver des informations pertinentes sur la propale, les clients ou tout autre contenu. Utilisez cette fonction pour récupérer du contexte ou des informations stockées dans la base de données vectorielle.",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "La requête texte pour rechercher des informations pertinentes dans la base de connaissances",
+          ),
+        limit: z
+          .number()
+          .optional()
+          .default(5)
+          .describe("Nombre maximum de résultats à retourner (par défaut: 5)"),
+      }),
+      outputSchema: editorTools.askKnowledge.outputSchema,
+      execute: async ({ query, limit = 5 }) => {
+        try {
+          const results = await semanticSearch(query, collectionName, limit);
+          return results;
+        } catch (error) {
+          console.error("Erreur lors de l'exécution de askKnowledge:", error);
+          throw new Error(
+            `Impossible d'effectuer la recherche dans la base de connaissances: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+          );
+        }
+      },
+    }),
+  };
+}

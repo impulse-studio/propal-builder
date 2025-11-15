@@ -13,6 +13,7 @@ export const env = createEnv({
     VERCEL_BRANCH_URL: z.string().optional(),
     QDRANT_URL: z.string().url().optional(),
     QDRANT_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
   },
   client: {},
   experimental__runtimeEnv: {},
