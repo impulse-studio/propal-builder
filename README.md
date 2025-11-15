@@ -300,34 +300,4 @@ Set these in your Vercel project settings:
 
 Vercel-specific variables (`VERCEL_URL`, `VERCEL_ENV`, etc.) are automatically set.
 
-## 📚 Key Features
 
-- **AI-Powered Proposal Editing**: Chat-based interface for editing proposals with AI assistance
-- **Voice Transcription**: Real-time audio transcription using Eleven Labs Scribe
-- **Rich Text Editor**: TipTap-based editor with custom blocks (pricing cards, feature lists, CTAs)
-- **Vector Search**: Qdrant integration for semantic search and client matching
-- **Type-Safe APIs**: oRPC for end-to-end type safety
-- **Background Jobs**: Trigger.dev workflows for async processing
-- **File Uploads**: Vercel Blob integration for image and file storage
-
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Run `pnpm checks` to ensure code quality
-4. Submit a pull request
-
-## 📝 License
-
-[Add your license here]
-
-## 🔗 Resources
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Vercel AI SDK](https://sdk.vercel.ai/)
-- [Eleven Labs API](https://elevenlabs.io/docs)
-- [Qdrant Documentation](https://qdrant.tech/documentation/)
-- [oRPC Documentation](https://orpc.dev/)
-- [Drizzle ORM](https://orm.drizzle.team/)
-- [TipTap Documentation](https://tiptap.dev/)
-- [Trigger.dev Documentation](https://trigger.dev/docs)
