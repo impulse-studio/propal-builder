@@ -11,5 +11,4 @@ export {
   Root as SlashCmdRoot,
   useSlashCommandExtension,
 } from "../slash-cmd";
-export { useKeyboardNavigation } from "../use-keyboard-navigation";
 export { useSlashCommand } from "../use-slash-command";
