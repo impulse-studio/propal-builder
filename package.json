@@ -20,6 +20,7 @@
     "db:stop": "docker compose -f docker-compose.yml down -v",
     "generate:auth": "pnpx @better-auth/cli generate --output ./db/schema/auth/schema.ts && pnpm exec biome check --write ./db/schema/auth/schema.ts",
     "trigger:deploy": "pnpx trigger.dev@latest deploy",
+    "trigger:webhook": "tsx scripts/trigger-webhook.ts",
     "env:pull": "vercel env pull .env",
     "sync": "git fetch template && git merge template/main",
     "sync:initial": "git fetch template && git merge template/main --allow-unrelated-histories",
