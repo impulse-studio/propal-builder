@@ -1,0 +1,16 @@
+import { ThemeProvider } from "next-themes";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
+import { Toaster } from "@/components/ui/sonner";
+import { Provider as TooltipProvider } from "@/components/ui/tooltip";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider attribute="class" forcedTheme="light">
+      <NuqsAdapter>
+        <TooltipProvider>{children}</TooltipProvider>
+      </NuqsAdapter>
+      <Toaster position="top-center" richColors />
+    </ThemeProvider>
+  );
+}
