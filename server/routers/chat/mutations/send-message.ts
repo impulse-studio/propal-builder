@@ -82,7 +82,7 @@ ${documentContent ? `\nContenu actuel du document (HTML):\n${documentContent}\n\
           tools: editorTools,
           providerOptions: {
             google: {
-              thinkingBudget: 8192,
+              thinkingBudget: 256,
               includeThoughts: true,
             },
           },

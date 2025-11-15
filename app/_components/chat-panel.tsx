@@ -1,9 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventIteratorToStream } from "@orpc/client";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -135,8 +135,9 @@ export function ChatPanel() {
             break;
           }
           case "insertPricingCard": {
-            const { title, price, period, features, highlighted } = toolCall.input;
-            insertPricingCard({
+            const { title, price, period, features, highlighted } =
+              toolCall.input;
+            await insertPricingCard({
               title,
               price,
               period,
@@ -152,7 +153,7 @@ export function ChatPanel() {
           }
           case "insertFeatureList": {
             const { title, features } = toolCall.input;
-            insertFeatureList({
+            await insertFeatureList({
               title,
               features,
             });
@@ -164,8 +165,9 @@ export function ChatPanel() {
             break;
           }
           case "insertCallToAction": {
-            const { title, description, buttonText, buttonLink } = toolCall.input;
-            insertCallToAction({
+            const { title, description, buttonText, buttonLink } =
+              toolCall.input;
+            await insertCallToAction({
               title,
               description,
               buttonText,
@@ -269,15 +271,6 @@ export function ChatPanel() {
     });
   }, [getValues, isLoading, sendMessage]);
 
-  const getMessageText = useCallback((message: ChatUIMessage): string => {
-    return message.parts
-      .filter(
-        (part): part is { type: "text"; text: string } => part.type === "text",
-      )
-      .map((part) => part.text)
-      .join("");
-  }, []);
-
   const getReasoningParts = (message: ChatUIMessage) => {
     return message.parts.filter(
       (
@@ -323,7 +316,6 @@ export function ChatPanel() {
               }
 
               if (message.role === "assistant") {
-                const text = getMessageText(message);
                 const reasoningParts = getReasoningParts(message);
                 const hasReasoning = reasoningParts.length > 0;
                 const lastReasoning = reasoningParts[reasoningParts.length - 1];
@@ -337,90 +329,102 @@ export function ChatPanel() {
                     ? getReasoningTitle(lastReasoning.text)
                     : undefined;
 
-                // Get tool parts
-                const toolParts = message.parts.filter(
+                // Check if message has any content
+                const hasAnyContent = message.parts.some(
                   (part) =>
+                    part.type === "text" ||
+                    part.type === "reasoning" ||
                     part.type.startsWith("tool-") ||
                     part.type === "dynamic-tool",
                 );
 
                 return (
                   <div key={message.id} className="w-full space-y-3">
-                    {isTyping &&
-                      !hasReasoning &&
-                      !text &&
-                      toolParts.length === 0 && (
-                        <Reasoning
-                          isStreaming={true}
-                          collapsible={false}
-                          defaultOpen={false}
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>{""}</ReasoningContent>
-                        </Reasoning>
-                      )}
-                    {reasoningParts.map((reasoning, idx) => {
-                      const isLastReasoning = idx === reasoningParts.length - 1;
-                      const isStreaming =
-                        isReasoningStreaming && isLastReasoning;
+                    {isTyping && !hasAnyContent && (
+                      <Reasoning
+                        isStreaming={true}
+                        collapsible={false}
+                        defaultOpen={false}
+                      >
+                        <ReasoningTrigger />
+                        <ReasoningContent>{""}</ReasoningContent>
+                      </Reasoning>
+                    )}
+                    {message.parts.map((part, partIndex) => {
+                      // Handle reasoning parts
+                      if (part.type === "reasoning") {
+                        const reasoningIndex = reasoningParts.findIndex(
+                          (p) => p === part,
+                        );
+                        const isLastReasoning =
+                          reasoningIndex === reasoningParts.length - 1;
+                        const isStreaming =
+                          isReasoningStreaming && isLastReasoning;
 
-                      return (
-                        <Reasoning
-                          key={`reasoning-${idx}`}
-                          isStreaming={isStreaming}
-                          defaultOpen={false}
-                          title={
-                            isLastReasoning ? lastReasoningTitle : undefined
-                          }
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>
-                            <MarkdownRenderer typing={isStreaming} size="sm">
-                              {reasoning.text}
-                            </MarkdownRenderer>
-                          </ReasoningContent>
-                        </Reasoning>
-                      );
+                        return (
+                          <Reasoning
+                            key={`part-${partIndex}-reasoning`}
+                            isStreaming={isStreaming}
+                            defaultOpen={false}
+                            title={
+                              isLastReasoning ? lastReasoningTitle : undefined
+                            }
+                          >
+                            <ReasoningTrigger />
+                            <ReasoningContent>
+                              <MarkdownRenderer typing={isStreaming} size="sm">
+                                {part.text}
+                              </MarkdownRenderer>
+                            </ReasoningContent>
+                          </Reasoning>
+                        );
+                      }
+
+                      // Handle text parts
+                      if (part.type === "text") {
+                        return (
+                          <MarkdownRenderer
+                            key={`part-${partIndex}-text`}
+                            typing={isTyping && !hasReasoning}
+                          >
+                            {part.text}
+                          </MarkdownRenderer>
+                        );
+                      }
+
+                      // Handle tool parts
+                      if (
+                        part.type.startsWith("tool-") ||
+                        part.type === "dynamic-tool"
+                      ) {
+                        const toolCallId =
+                          "toolCallId" in part
+                            ? part.toolCallId
+                            : `tool-${partIndex}`;
+                        return (
+                          <ToolCallDisplay
+                            key={`part-${partIndex}-tool-${toolCallId}`}
+                            part={part}
+                            isStreaming={isTyping}
+                          />
+                        );
+                      }
+
+                      // Handle step-start parts (for multi-step)
+                      if (part.type === "step-start") {
+                        return partIndex > 0 ? (
+                          <hr key={`part-${partIndex}-step-separator`} />
+                        ) : null;
+                      }
+
+                      return null;
                     })}
-                    {toolParts.length > 0 && (
-                      <div className="space-y-2">
-                        {toolParts.map((part, idx) => {
-                          const toolCallId =
-                            "toolCallId" in part
-                              ? part.toolCallId
-                              : `tool-${idx}`;
-                          return (
-                            <ToolCallDisplay
-                              key={`tool-${idx}-${toolCallId}`}
-                              part={part}
-                              isStreaming={isTyping}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    {text && (
-                      <MarkdownRenderer typing={isTyping && !hasReasoning}>
-                        {text}
-                      </MarkdownRenderer>
-                    )}
                   </div>
                 );
               }
 
               return null;
             })}
-            {isLoading &&
-              messages.length > 0 &&
-              messages[messages.length - 1]?.role !== "assistant" && (
-                <div className="w-full">
-                  <div className="flex gap-1">
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.3s]" />
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.15s]" />
-                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400" />
-                  </div>
-                </div>
-              )}
             <div ref={messagesEndRef} />
           </div>
         )}
