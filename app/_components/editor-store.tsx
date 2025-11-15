@@ -1,7 +1,7 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 
 interface EditorStoreState {
   editor: Editor | null;
@@ -35,14 +35,14 @@ interface EditorStoreState {
     period?: string;
     features?: string[];
     highlighted?: boolean;
-  }) => void;
-  insertFeatureList: (attrs?: { title?: string; features?: string[] }) => void;
+  }) => Promise<void>;
+  insertFeatureList: (attrs?: { title?: string; features?: string[] }) => Promise<void>;
   insertCallToAction: (attrs?: {
     title?: string;
     description?: string;
     buttonText?: string;
     buttonLink?: string;
-  }) => void;
+  }) => Promise<void>;
   updateBlock: (nodeIndex: number, attrs: Record<string, unknown>) => void;
   deleteBlock: (nodeIndex: number) => void;
   getBlock: (nodeIndex: number) => Record<string, unknown> | null;
@@ -71,20 +71,22 @@ export function EditorStoreProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const editorRef = useRef<Editor | null>(null);
+  const [, forceUpdate] = useState({});
+
+  const setEditor = useCallback((newEditor: Editor | null) => {
+    editorRef.current = newEditor;
+    forceUpdate({}); // Force re-render when editor changes
+  }, []);
 
   const applyEdit = useCallback(
     (command: (editor: Editor) => void) => {
-      if (!editor) return;
+      if (!editorRef.current) return;
+      if (editorRef.current.isDestroyed) return;
 
-      // Schedule the editor command outside of the current React lifecycle
-      // to avoid flushSync warnings when commands are triggered from effects.
-      setTimeout(() => {
-        if (!editor || editor.isDestroyed) return;
-        command(editor);
-      }, 0);
+      command(editorRef.current);
     },
-    [editor],
+    [],
   );
 
   const insertContent = useCallback(
@@ -192,12 +194,14 @@ export function EditorStoreProvider({
   );
 
   const getContent = useCallback(() => {
-    return editor?.getHTML() || "";
-  }, [editor]);
+    const html = editorRef.current?.getHTML() || "";
+    return html;
+  }, []);
 
   const getJSON = useCallback(() => {
-    return editor?.getJSON() || null;
-  }, [editor]);
+    const json = editorRef.current?.getJSON() || null;
+    return json;
+  }, []);
 
   const setJSON = useCallback(
     (json: Record<string, unknown>) => {
@@ -212,7 +216,9 @@ export function EditorStoreProvider({
     (searchText: string, replaceWith: string, replaceAll = false) => {
       applyEdit((editor) => {
         const html = editor.getHTML();
-        if (!html.includes(searchText)) return;
+        if (!html.includes(searchText)) {
+          return;
+        }
 
         let newContent = html;
         if (replaceAll) {
@@ -265,7 +271,9 @@ export function EditorStoreProvider({
       applyEdit((editor) => {
         const html = editor.getHTML();
         const startIndex = html.indexOf(startText);
-        if (startIndex === -1) return;
+        if (startIndex === -1) {
+          return;
+        }
 
         let endIndex: number;
         if (endText) {
@@ -295,7 +303,6 @@ export function EditorStoreProvider({
         const fullText = doc.textContent;
 
         if (!fullText.includes(textToDelete)) {
-          console.warn(`Text "${textToDelete}" not found in document`);
           return;
         }
 
@@ -334,7 +341,6 @@ export function EditorStoreProvider({
         }
 
         if (ranges.length === 0) {
-          console.warn(`Could not find text "${textToDelete}" in document`);
           return;
         }
 
@@ -353,41 +359,101 @@ export function EditorStoreProvider({
   );
 
   const insertPricingCard = useCallback(
-    (attrs?: {
+    async (attrs?: {
       title?: string;
       price?: string;
       period?: string;
       features?: string[];
       highlighted?: boolean;
     }) => {
-      applyEdit((editor) => {
-        editor.chain().focus().insertPricingCard(attrs).run();
-      });
+      if (!editorRef.current) {
+        return;
+      }
+
+      // Get the end position of the document
+      const endPos = editorRef.current.state.doc.content.size;
+
+      // Insert at the end of the document explicitly
+      editorRef.current
+        .chain()
+        .insertContentAt(endPos, {
+          type: "pricingCard",
+          attrs: {
+            title: attrs?.title || "Standard Plan",
+            price: attrs?.price || "$49",
+            period: attrs?.period || "month",
+            features: attrs?.features || ["Feature 1", "Feature 2", "Feature 3"],
+            highlighted: attrs?.highlighted || false,
+          },
+        })
+        .run();
+
+      // Force a small delay to ensure rendering is complete
+      // This is a workaround for TipTap's async rendering
+      return new Promise<void>(resolve => setTimeout(resolve, 50));
     },
-    [applyEdit],
+    [],
   );
 
   const insertFeatureList = useCallback(
-    (attrs?: { title?: string; features?: string[] }) => {
-      applyEdit((editor) => {
-        editor.chain().focus().insertFeatureList(attrs).run();
-      });
+    async (attrs?: { title?: string; features?: string[] }) => {
+      if (!editorRef.current) {
+        return;
+      }
+
+      // Get the end position of the document
+      const endPos = editorRef.current.state.doc.content.size;
+
+      // Insert at the end of the document explicitly
+      editorRef.current
+        .chain()
+        .insertContentAt(endPos, {
+          type: "featureList",
+          attrs: {
+            title: attrs?.title || "Features",
+            features: attrs?.features || ["Feature 1", "Feature 2", "Feature 3"],
+          },
+        })
+        .run();
+
+      // Force a small delay to ensure rendering is complete
+      return new Promise<void>(resolve => setTimeout(resolve, 50));
     },
-    [applyEdit],
+    [],
   );
 
   const insertCallToAction = useCallback(
-    (attrs?: {
+    async (attrs?: {
       title?: string;
       description?: string;
       buttonText?: string;
       buttonLink?: string;
     }) => {
-      applyEdit((editor) => {
-        editor.chain().focus().insertCallToAction(attrs).run();
-      });
+      if (!editorRef.current) {
+        return;
+      }
+
+      // Get the end position of the document
+      const endPos = editorRef.current.state.doc.content.size;
+
+      // Insert at the end of the document explicitly
+      editorRef.current
+        .chain()
+        .insertContentAt(endPos, {
+          type: "callToAction",
+          attrs: {
+            title: attrs?.title || "Ready to get started?",
+            description: attrs?.description || "Join thousands of satisfied customers today.",
+            buttonText: attrs?.buttonText || "Get Started",
+            buttonLink: attrs?.buttonLink || "#",
+          },
+        })
+        .run();
+
+      // Force a small delay to ensure rendering is complete
+      return new Promise<void>(resolve => setTimeout(resolve, 50));
     },
-    [applyEdit],
+    [],
   );
 
   const updateBlock = useCallback(
@@ -467,9 +533,11 @@ export function EditorStoreProvider({
 
   const getBlock = useCallback(
     (nodeIndex: number): Record<string, unknown> | null => {
-      if (!editor) return null;
+      if (!editorRef.current) {
+        return null;
+      }
 
-      const { state } = editor;
+      const { state } = editorRef.current;
       const { doc } = state;
 
       // Find the node at the given index
@@ -491,7 +559,7 @@ export function EditorStoreProvider({
 
       return targetNode as Record<string, unknown> | null;
     },
-    [editor],
+    [],
   );
 
   const getAllBlocks = useCallback(
@@ -502,9 +570,11 @@ export function EditorStoreProvider({
       type: string;
       attrs: Record<string, unknown>;
     }> => {
-      if (!editor) return [];
+      if (!editorRef.current) {
+        return [];
+      }
 
-      const { state } = editor;
+      const { state } = editorRef.current;
       const { doc } = state;
 
       const blocks: Array<{
@@ -528,13 +598,13 @@ export function EditorStoreProvider({
 
       return blocks;
     },
-    [editor],
+    [],
   );
 
   return (
     <EditorStoreContext.Provider
       value={{
-        editor,
+        editor: editorRef.current,
         setEditor,
         getContent,
         getJSON,

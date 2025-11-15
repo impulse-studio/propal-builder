@@ -52,7 +52,9 @@ function InsertAtPositionToolComponent({ part }: InsertAtPositionToolProps) {
         </div>
         <div className="space-y-3">
           <div className="rounded-md bg-bg-white-0 p-3 ring-1 ring-stroke-soft-200">
-            <p className="mb-1 text-paragraph-xs text-text-sub-600">Position</p>
+            <p className="mb-1 text-paragraph-xs text-text-sub-600">
+              Position
+            </p>
             <p className="text-paragraph-sm text-text-strong-950">
               {positionLabels[input.position as keyof typeof positionLabels] ||
                 input.position}
