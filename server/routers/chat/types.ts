@@ -20,6 +20,7 @@ type UpdateBlockTool = InferUITool<typeof editorTools.updateBlock>;
 type DeleteBlockTool = InferUITool<typeof editorTools.deleteBlock>;
 type GetBlockTool = InferUITool<typeof editorTools.getBlock>;
 type GetAllBlocksTool = InferUITool<typeof editorTools.getAllBlocks>;
+type GetClientInfoTool = InferUITool<typeof editorTools.getClientInfo>;
 
 export type ChatUITools = {
   findAndReplace: FindAndReplaceTool;
@@ -35,6 +36,7 @@ export type ChatUITools = {
   deleteBlock: DeleteBlockTool;
   getBlock: GetBlockTool;
   getAllBlocks: GetAllBlocksTool;
+  getClientInfo: GetClientInfoTool;
 };
 
 type ChatMetadata = {

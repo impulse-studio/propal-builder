@@ -3,6 +3,7 @@ export { DeleteTextTool } from "./delete-text-tool";
 export { FindAndReplaceTool } from "./find-and-replace-tool";
 export { GetAllBlocksTool } from "./get-all-blocks-tool";
 export { GetBlockTool } from "./get-block-tool";
+export { GetClientInfoTool } from "./get-client-info-tool";
 export { GetDocumentContentTool } from "./get-document-content-tool";
 export { InsertAtPositionTool } from "./insert-at-position-tool";
 export { InsertCallToActionTool } from "./insert-call-to-action-tool";
