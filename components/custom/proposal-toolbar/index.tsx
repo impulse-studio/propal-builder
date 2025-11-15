@@ -48,7 +48,10 @@ export function ProposalToolbar({ editor }: ProposalToolbarProps) {
     <div
       key={updateKey}
       className={cn([
-        "flex items-center gap-1 rounded-xl border border-stroke-soft-200 bg-bg-white-0 p-2 shadow-regular-xs",
+        "flex items-center gap-1 rounded-xl bg-bg-weak-50/50 backdrop-blur-sm p-2",
+        "transition-all duration-200 ease-out",
+        "hover:bg-bg-weak-100/80 hover:shadow-regular-xs",
+        "focus-within:bg-bg-weak-100 focus-within:shadow-regular-xs",
       ])}
       role="toolbar"
       aria-label="Text formatting toolbar"

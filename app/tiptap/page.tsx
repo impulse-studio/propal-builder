@@ -127,33 +127,36 @@ function TiptapEditorWithSlashCommands() {
         </div>
 
         <EditorContext.Provider value={{ editor }}>
-          <RichTextEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Start writing your proposal..."
-            additionalExtensions={additionalExtensions}
-            starterKitConfig={starterKitConfig}
-            editorClassName={editorClassName}
-            showFloatingToolbar={false}
-            customToolbar={
-              <div className="border-b border-stroke-soft-200 p-3">
-                <ProposalToolbar editor={editor} />
-              </div>
-            }
-            className={cn(
-              "flex w-full flex-col rounded-xl bg-bg-white-0 pb-4 shadow-regular-xs",
-              "ring-1 ring-stroke-soft-200 ring-inset transition duration-200 ease-out",
-            )}
-            editorContentClassName={cn("min-h-[400px] pt-6")}
-            editorOverlays={
-              editor ? (
-                <SlashCmdRoot editor={editor}>
-                  <SlashCmd />
-                </SlashCmdRoot>
-              ) : null
-            }
-            onEditorReady={setEditor}
-          />
+          <div className="flex w-full flex-col">
+            {/* Toolbar */}
+            <div className="p-3">
+              <ProposalToolbar editor={editor} />
+            </div>
+
+            {/* Editor Content */}
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Start writing your proposal..."
+              additionalExtensions={additionalExtensions}
+              starterKitConfig={starterKitConfig}
+              editorClassName={editorClassName}
+              showFloatingToolbar={false}
+              className={cn(
+                "flex w-full flex-col rounded-xl bg-bg-white-0 pb-4 shadow-regular-xs",
+                "ring-1 ring-stroke-soft-200 ring-inset transition duration-200 ease-out",
+              )}
+              editorContentClassName={cn("min-h-[400px] pt-6")}
+              editorOverlays={
+                editor ? (
+                  <SlashCmdRoot editor={editor}>
+                    <SlashCmd />
+                  </SlashCmdRoot>
+                ) : null
+              }
+              onEditorReady={setEditor}
+            />
+          </div>
         </EditorContext.Provider>
       </div>
     </div>
