@@ -6,7 +6,7 @@ import * as Input from "@/components/ui/input";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
+    <div className="min-h-screen font-sans">
       <Header />
       <main className="mx-auto max-w-5xl px-5 py-16">
         <div className="space-y-12">

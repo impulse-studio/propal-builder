@@ -6,7 +6,7 @@ import { Provider as TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" forcedTheme="light">
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <NuqsAdapter>
         <TooltipProvider>{children}</TooltipProvider>
       </NuqsAdapter>
