@@ -191,6 +191,9 @@ importers:
       interactjs:
         specifier: ^1.10.27
         version: 1.10.27
+      inspx:
+        specifier: 0.0.1-alpha.6
+        version: 0.0.1-alpha.6(react@19.2.0)
       merge-refs:
         specifier: ^2.0.0
         version: 2.0.0(@types/react@19.2.5)
@@ -339,6 +342,10 @@ packages:
 
   '@babel/helper-validator-identifier@7.28.5':
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.28.4':
+    resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
   '@babel/types@7.28.5':
@@ -1021,6 +1028,9 @@ packages:
 
   '@radix-ui/number@1.1.1':
     resolution: {integrity: sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==}
+
+  '@radix-ui/popper@0.0.10':
+    resolution: {integrity: sha512-YFKuPqQPKscreQid7NuB4it3PMzSwGg03vgrud6sVliHkI43QNAOHyrHyMNo015jg6QK5GVDn+7J2W5uygqSGA==}
 
   '@radix-ui/primitive@1.1.3':
     resolution: {integrity: sha512-JTF99U/6XIjCBo0wqkU5sK10glYe27MRRsfwoiq5zzOEZLHU3A3KCMa5X/azekYRCJ0HlwI0crAXS/5dEHTzDg==}
@@ -3015,6 +3025,12 @@ packages:
   interactjs@1.10.27:
     resolution: {integrity: sha512-y/8RcCftGAF24gSp76X2JS3XpHiUvDQyhF8i7ujemBz77hwiHDuJzftHx7thY8cxGogwGiPJ+o97kWB6eAXnsA==}
 
+  inspx@0.0.1-alpha.6:
+    resolution: {integrity: sha512-2ZWTOUyPq11AUaHMiePWUkp47qLuSuQryQ5JGKQ61PCOi1N3PHYvFvR0/0l1elEjXEqLgwubjpYZ8JnPJQRjDw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16'
+
   intl-messageformat@10.7.18:
     resolution: {integrity: sha512-m3Ofv/X/tV8Y3tHXLohcuVuhWKo7BBq62cqY15etqmLxg2DZ34AGGgQDeR+SCta2+zICb1NX83af0GJmbQ1++g==}
 
@@ -3910,6 +3926,8 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.28.5': {}
 
+  '@babel/runtime@7.28.4': {}
+
   '@babel/types@7.28.5':
     dependencies:
       '@babel/helper-string-parser': 7.27.1
@@ -4422,6 +4440,11 @@ snapshots:
       - '@opentelemetry/api'
 
   '@radix-ui/number@1.1.1': {}
+
+  '@radix-ui/popper@0.0.10':
+    dependencies:
+      '@babel/runtime': 7.28.4
+      csstype: 3.2.1
 
   '@radix-ui/primitive@1.1.3': {}
 
@@ -6828,6 +6851,11 @@ snapshots:
   interactjs@1.10.27:
     dependencies:
       '@interactjs/types': 1.10.27
+
+  inspx@0.0.1-alpha.6(react@19.2.0):
+    dependencies:
+      '@radix-ui/popper': 0.0.10
+      react: 19.2.0
 
   intl-messageformat@10.7.18:
     dependencies:
