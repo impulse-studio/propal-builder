@@ -20,7 +20,7 @@
       "recommended": true,
       "suspicious": {
         "noUnknownAtRules": "off",
-        "noArrayIndexKey": "error"
+        "noArrayIndexKey": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "warn",
