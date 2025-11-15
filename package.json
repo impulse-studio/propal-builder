@@ -87,6 +87,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "interactjs": "^1.10.27",
+    "inspx": "0.0.1-alpha.6",
     "merge-refs": "^2.0.0",
     "motion": "^12.23.24",
     "next": "16.0.3",
