@@ -1,0 +1,244 @@
+---
+description: Global project configuration and standards
+globs: **/*
+alwaysApply: true
+---
+# Global Project Configuration
+
+Project-wide configuration and standards. Auto-included for all files.
+
+<rule>
+name: global_project_config
+description: Global project configuration and standards. Auto-included for all files.
+globs: ["**/*"]
+filters:
+  - type: any
+    pattern: ".*"
+actions:
+  - type: suggest
+    message: |
+      Follow these global project configurations:
+
+      0. AI Workflow Guidelines:
+         - Before editing or responding to any query:
+           * Always fetch relevant cursor rules using the fetch_rules tool before making any edits.
+           * Always check the available-rules list for relevant rules and fetch them if necessary.
+           * Emphasise the importance of the global/self_improve.mdc rule to continuously improve Cursor rules.
+         - Commenting Code:
+           * Avoid non-essential comments; only comment to explain complex or non-obvious logic.
+           * Prefer clear, self-explanatory code through descriptive variable and function names.
+         - When implementing new features:
+           * Check existing patterns in similar files
+           * Review directory structure and file naming conventions
+           * Ensure consistent code style with the rest of the project
+         - For dependency management:
+           * ALWAYS use pnpm for package commands (e.g., pnpm add, pnpm remove)
+           * Never use npm or yarn for package commands
+           * Provide the exact command for installation (e.g., pnpm add react-hook-form)
+           * Explain why the dependency is needed
+         - Cursor Rules Organization:
+            * The .cursor/rules directory is structured into three subfolders:
+               - global: boilerplate-wide rules, automatically included for all files
+               - project: project-specific rules, manually included per repository
+               - examples: illustrative rules for specific use-cases, manually included
+         - Code modification approach:
+           * Prefer small, focused changes
+           * Ensure changes follow the established patterns
+           * Verify type safety and handle edge cases
+           * Consider performance implications
+
+      1. Application Structure:
+         - Base routes:
+           * app/(auth) - Authentication and user management
+           * app/(marketing) - Public landing pages
+           * app/(application) - Authenticated application routes
+         - Shared directories:
+           * lib/utils - Utility functions
+           * types/ - Type definitions
+
+      2. Component Organization:
+         - Page-specific components:
+           * Create in _components folder next to the page
+           * Example: app/(auth)/login/_components/login-form.tsx
+         - Route-specific components:
+           * Create in _components folder at route level
+           * Example: app/(marketing)/_components/pricing-table.tsx
+         - Shared components:
+           * Place in components/ at root level
+           * Only for truly reusable components
+
+      3. File Naming Conventions:
+         - All files should use lowercase kebab-case:
+           * Good: button-group.tsx, user-profile.tsx
+           * Bad: ButtonGroup.tsx, UserProfile.tsx
+         - Directory names should also use kebab-case
+         - Server components should use regular .tsx extension
+         - Page components should export as default
+         - Utility functions should use descriptive, action-oriented names
+
+      4. Import Alias Conventions:
+         - Always use import aliases when available
+         - Available import aliases:
+           * @/app - App directory
+           * @/components - All components
+           * @/hooks - Custom hooks
+           * @/lib - Utility libraries
+           * @/styles - Global styles
+           * @/types - TypeScript type definitions
+           * @/public - Public assets
+           * @/server - Server-side code
+           * @/trpc - tRPC implementation
+
+         ```typescript
+         // Bad: Using relative import paths
+         import { Button } from "../../components/ui/button";
+
+         // Good: Using import aliases
+         import * as Button from "@/components/ui/button";
+         import { useToast } from "@/hooks/use-toast";
+         import { cn } from "@/lib/utils";
+         import type { User } from "@/types/user";
+         ```
+
+      5. Server/Client Pattern:
+         - Split server/client logic:
+           * Use 'use client' for client-side components
+           * Keep data fetching in server components
+           * Move interactive UI to client components
+         - Component structure:
+           * ServerComponent.tsx - Main component with data prefetching
+           * ServerComponent.client.tsx - Client-side interactive parts
+
+      6. Data and State Management:
+         - Server-side:
+           * All backend logic in @server directory
+           * Controllers in @server/controllers/{model}
+           * Separate queries.ts and mutations.ts
+           * Router in controller/{model}/router.ts
+         - Client-side:
+           * Use Zustand for global state (only if needed)
+           * Prefer local state when possible
+           * Use RSC with prefetching
+
+      7. Background Processing:
+         - Use trigger.dev for:
+           * Email sending
+           * File processing
+           * Data synchronization
+           * Heavy computations
+           * Scheduled tasks
+
+examples:
+  - input: |
+      // Bad: Component in wrong location
+      // app/components/auth/login-form.tsx
+      export const LoginForm = () => {
+        // ...
+      };
+
+      // Good: Component in correct location
+      // app/(auth)/login/_components/login-form.tsx
+      export const LoginForm = () => {
+        // ...
+      };
+
+      // Good: Shared component
+      // components/ui/button.tsx
+      export const Button = () => {
+        // ...
+      };
+
+      // Bad: PascalCase file name
+      // components/custom/UserCard.tsx
+      export const UserCard = () => {
+        // ...
+      };
+
+      // Good: kebab-case file name
+      // components/custom/user-card.tsx
+      export const UserCard = () => {
+        // ...
+      };
+
+      // Bad: Relative imports
+      import { Button } from "../../../components/ui/button";
+      import { useToast } from "../../../hooks/use-toast";
+
+      // Good: Alias imports
+      import * as Button from "@/components/ui/button";
+      import { useToast } from "@/hooks/use-toast";
+    output: "Place components in the correct directory based on their scope and use proper naming and import conventions"
+
+  - input: |
+      // Bad: Mixing client and server code
+      // app/(application)/dashboard/page.tsx
+      export default function DashboardPage() {
+        const [state, setState] = useState();
+        const data = await fetchData();
+        return <div>{/* ... */}</div>;
+      }
+
+      // Good: Separated client and server code
+      // app/(application)/dashboard/page.tsx
+      export default async function DashboardPage() {
+        const data = await fetchData();
+        return <DashboardClient initialData={data} />;
+      }
+
+      // app/(application)/dashboard/_components/dashboard-client.tsx
+      'use client';
+      export function DashboardClient({ initialData }) {
+        const [state, setState] = useState(initialData);
+        return <div>{/* ... */}</div>;
+      }
+    output: "Separate client and server code properly"
+
+  - input: |
+      // Bad: Global state for local concern
+      const useGlobalState = create((set) => ({
+        modalOpen: false,
+        setModalOpen: (open) => set({ modalOpen: open })
+      }));
+
+      // Good: Global state for shared concern
+      const useAuthStore = create((set) => ({
+        user: null,
+        setUser: (user) => set({ user }),
+        logout: () => set({ user: null })
+      }));
+    output: "Use Zustand only for necessary global state"
+
+  - input: |
+      // Bad: Installing dependencies directly
+      AI: I'll implement this feature. First, let's install the required packages:
+      ```bash
+      npm install react-hook-form zod @hookform/resolvers
+      ```
+
+      // Bad: Using npm instead of pnpm
+      AI: To implement this feature, we'll need some packages for form handling.
+      Could you please install these dependencies first:
+
+      ```bash
+      npm install react-hook-form zod @hookform/resolvers
+      ```
+
+      // Good: Asking user to install dependencies with pnpm
+      AI: To implement this feature, we'll need some packages for form handling.
+      Could you please install these dependencies first:
+
+      ```bash
+      pnpm add react-hook-form zod @hookform/resolvers
+      ```
+
+      These are needed for:
+      - react-hook-form: Form state management and validation
+      - zod: Type-safe schema validation
+      - @hookform/resolvers: Integration between react-hook-form and zod
+
+      Let me know when they're installed, and I'll continue with the implementation.
+
+metadata:
+  priority: high
+  version: 1.3
+</rule>
