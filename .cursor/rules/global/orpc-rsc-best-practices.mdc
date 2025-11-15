@@ -2,523 +2,700 @@
 description: Best practices for using oRPC with React Server Components
 alwaysApply: false
 ---
+
 filters:
-  - type: file_extension
-    pattern: "\\.(ts|tsx)$"
-actions:
-  - type: suggest
-    message: |
-      **IMPORTANT: oRPC is the EXCLUSIVE system for ALL data operations in this codebase.**
-      - ALL queries use `orpc.procedure.queryOptions()` with `useQuery`/`useSuspenseQuery`
-      - ALL mutations use `orpc.procedure.mutationOptions()` with `useMutation`
-      - NO other query/mutation systems (tRPC, fetch, etc.) should be used
-      - ALL server procedures MUST be defined using oRPC patterns
 
-      Follow these oRPC with RSC best practices:
+- type: file_extension
+  pattern: "\\.(ts|tsx)$"
+  actions:
+- type: suggest
+  message: |
+  **IMPORTANT: oRPC is the EXCLUSIVE system for ALL data operations in this codebase.**
+    - ALL queries use `orpc.procedure.queryOptions()` with `useQuery`/`useSuspenseQuery`
+    - ALL mutations use `orpc.procedure.mutationOptions()` with `useMutation`
+    - NO other query/mutation systems (tRPC, fetch, etc.) should be used
+    - ALL server procedures MUST be defined using oRPC patterns
 
-      1. Server Structure:
-         - Place all backend logic in @server directory
-         - Organize controllers by data model
-         - Separate queries and mutations in each controller
-         - Use proper router organization with base.router()
-         - Use centralized procedures (e.g., protectedProcedure)
+    Follow these oRPC with RSC best practices:
+    1. Server Structure:
+        - Place all backend logic in @server directory
+        - Organize controllers by data model
+        - Separate queries and mutations in each controller
+        - Use proper router organization with base.router()
+        - Use centralized procedures (e.g., protectedProcedure)
 
-      2. Controller Organization:
-         - Create separate queries/ and mutations/ folders
-         - Implementation functions in queries/ and mutations/ folders
-         - Place validators in validators.ts file
-         - Define procedures with .handler() in router.ts file
-         - Use clean imports with explicit naming
-         - Create types.ts files in both queries/ and mutations/ folders for context types
+    2. Controller Organization:
+        - Create separate queries/ and mutations/ folders
+        - Implementation functions in queries/ and mutations/ folders
+        - Place validators in validators.ts file
+        - Define procedures using base + handler + call pattern
+        - **MANDATORY**: Use `export * from` in index files for re-exports
+        - **MANDATORY**: Import from index files in routers, not individual files
+          For example:
 
-         For example:
-         ```
-         server/routers/{model}/
-         ├── router.ts           # Define procedures that use implementations
-         ├── validators.ts       # Define all Zod schemas
-         ├── queries/
-         │   ├── index.ts        # Export all query implementations
-         │   ├── types.ts        # Define query context types
-         │   ├── getItem.ts      # Individual implementations
-         │   └── listItems.ts
-         └── mutations/
-             ├── index.ts        # Export all mutation implementations
-             ├── types.ts        # Define mutation context types
-             ├── createItem.ts   # Individual implementations
-             └── updateItem.ts
-         ```
+        ```
+        server/routers/{model}/
+        ├── router.ts           # Define procedures using base + handler + call pattern
+        ├── validators.ts       # Define all Zod schemas
+        ├── queries/
+        │   ├── index.ts        # export * from "./file"; (MANDATORY)
+        │   ├── getItem.ts      # Individual base + handler exports
+        │   └── listItems.ts
+        └── mutations/
+            ├── index.ts        # export * from "./file"; (MANDATORY)
+            ├── createItem.ts   # Individual base + handler exports
+            └── updateItem.ts
+        ```
 
-      3. Procedure Definitions:
-         - Define procedures in router.ts file using .handler():
-           ```typescript
-           // router.ts
-           export const modelRouter = base.router({
-             // Queries
-             getItem: protectedProcedure
-               .input(getItemSchema)
-               .handler(async ({ context, input }) => {
-                 const { db, session } = context;
-                 return await getItem({ db, session, input });
-               }),
+        **Index File Pattern (MANDATORY)**:
 
-             // Mutations
-             updateItem: protectedProcedure
-               .input(updateItemSchema)
-               .handler(async ({ context, input }) => {
-                 const { db, session } = context;
-                 return await updateItem({ db, session, input });
-               }),
-           });
-           ```
-         - Use .route({ method: "GET" }) to force HTTP method for read operations:
-           ```typescript
-           getUser: protectedProcedure
-             .route({ method: "GET" })
-             .handler(async ({ context }) => {
-               const { db, session } = context;
-               return await getUser({ db, session });
-             }),
-           ```
-         - Implementation functions in separate files:
-           ```typescript
-           // queries/getItem.ts
-           import { ItemQueryContextWithInput } from "./types";
+        ```typescript
+        // queries/index.ts
+        export * from "./get-item";
+        export * from "./list-items";
 
-           export async function getItem({
-             input,
-             db,
-             session
-           }: ItemQueryContextWithInput<GetItemInput>) {
-             // Implementation
-             return item;
-           }
-           ```
-         - Use proper input validation with Zod
-         - Implement proper error handling
-         - Handle authentication properly
-         - Define reusable input schemas in validators.ts file
+        // mutations/index.ts
+        export * from "./create-item";
+        export * from "./update-item";
+        ```
 
-      4. HTTP Method Selection:
-         - ALWAYS specify the correct HTTP method for all procedures using .route({ method: "..." })
-         - Choose methods based on semantic purpose, not just read vs write:
+        **Router Import Pattern (MANDATORY)**:
 
-         **GET** - Read operations (no side effects):
-         ```typescript
-         // All query operations
-         getUser: protectedProcedure
-           .route({ method: "GET" })
-           .handler(async ({ context }) => {
-             return await getUser({ db, session });
-           }),
+        ```typescript
+        // router.ts
+        import { call } from "@orpc/server";
+        import {
+            getItemBase,
+            getItemHandler,
+            listItemsBase,
+            listItemsHandler,
+        } from "./queries";
+        import {
+            createItemBase,
+            createItemHandler,
+            updateItemBase,
+            updateItemHandler,
+        } from "./mutations";
+        ```
 
-         listItems: protectedProcedure
-           .route({ method: "GET" })
-           .input(listSchema)
-           .handler(async ({ context, input }) => {
-             return await listItems({ db, session, input });
-           }),
-         ```
+    3. **Custom Error Definition Guidelines**:
+        - **REQUIRED**: All custom errors MUST have specific, descriptive names
+        - **REQUIRED**: All custom errors MUST include a status code
+        - **PROHIBITED**: Generic error names like CONFLICT, ERROR, FAILURE
+        - **PATTERN**: Use business-logic-specific error names that describe the exact problem
 
-         **POST** - Create new resources or trigger actions (side effects):
-         ```typescript
-         // Creating, sending emails, triggering actions
-         sendInvitation: protectedProcedure
-           .route({ method: "POST" })
-           .input(invitationSchema)
-           .handler(async ({ context, input }) => {
-             return await sendInvitation({ db, session, input });
-           }),
-         ```
+        **Error Naming Conventions**:
 
-         **PUT** - Replace entire resources or upsert operations:
-         ```typescript
-         // Full replacement or upsert (create or replace)
-         saveUserPreferences: protectedProcedure
-           .route({ method: "PUT" })
-           .input(preferencesSchema)
-           .handler(async ({ context, input }) => {
-             return await saveUserPreferences({ db, session, input });
-           }),
-         ```
+        ```typescript
+        // Bad: Generic error names
+        .errors({
+          CONFLICT: { status: 409 },
+          ERROR: { status: 500 },
+          FAILED: { status: 400 },
+        })
 
-         **PATCH** - Partial updates to existing resources:
-         ```typescript
-         // Partial updates, status changes, toggle operations
-         updateUserProfile: protectedProcedure
-           .route({ method: "PATCH" })
-           .input(profileUpdateSchema)
-           .handler(async ({ context, input }) => {
-             return await updateUserProfile({ db, session, input });
-           }),
+        // Good: Specific business logic errors with status codes
+        .errors({
+          EMAIL_ALREADY_EXISTS: { status: 409 },
+          USER_NOT_FOUND: { status: 404 },
+          INSUFFICIENT_PERMISSIONS: { status: 403 },
+          SUBSCRIPTION_CANCELLED: { status: 400 },
+          PAYMENT_FAILED: { status: 402 },
+        })
+        ```
 
-         toggleSetting: protectedProcedure
-           .route({ method: "PATCH" })
-           .input(toggleSchema)
-           .handler(async ({ context, input }) => {
-             return await toggleSetting({ db, session, input });
-           }),
-         ```
+        **Status Code Guidelines**:
+        - 400: Client request errors (validation, business logic violations)
+        - 401: Authentication required
+        - 403: Insufficient permissions / authorization failed
+        - 404: Resource not found
+        - 409: Resource conflicts (duplicates, state conflicts)
+        - 422: Validation errors
+        - 500: Internal server errors
 
-         **DELETE** - Remove or cancel resources:
-         ```typescript
-         // Canceling, removing, deleting
-         cancelSubscription: protectedProcedure
-           .route({ method: "DELETE" })
-           .input(cancelSchema)
-           .handler(async ({ context, input }) => {
-             return await cancelSubscription({ db, session, input });
-           }),
-         ```
+        **Error Categories**:
+        - **Middleware-specific**: Authentication, authorization errors thrown by middleware
+        - **Procedure-specific**: Business logic errors specific to individual procedures
+        - **Data-specific**: Database constraint violations, not found errors
+        - **External-specific**: Third-party service failures (payment, email, etc.)
 
-         **Method Selection Guidelines:**
-         - GET: Reading data, health checks, exports, portal URLs
-         - POST: Creating resources, sending emails, triggering workflows
-         - PUT: Saving entire settings, upserting preferences, full replacements
-         - PATCH: Updating profiles, changing status, toggling features
-         - DELETE: Canceling subscriptions, removing resources, banning users
+            3.1. Error Definition Location (REQUIRED):
 
-      5. Type Definitions for DB and Context:
-         - Define clear type interfaces for database and context in types.ts files:
-           ```typescript
-           // queries/types.ts
-           import { z } from "zod";
-           import { Database } from "@/db";
-           import { Session } from "@/lib/auth/types";
-           import { getItemSchema } from "../validators";
+        - All errors MUST be defined on bases, never inside middleware or routers.
+        - Shared/middleware-thrown errors (authentication, authorization, rate limiting) belong on the global base in `server/context.ts`.
+        - Procedure/business errors belong on the procedure’s base in the corresponding query/mutation file.
+        - Middleware MUST only throw errors from the base provided in opts; it MUST NOT declare its own `.errors()`.
 
-           export type GetItemInput = z.infer<typeof getItemSchema>;
+        Example: Shared errors on global base
 
-           // Base context without input
-           export interface ItemQueryContext {
-             db: Database;
-             session: Session;
-           }
-
-           // Extended context with input
-           export interface ItemQueryContextWithInput<T> extends ItemQueryContext {
-             input: T;
-           }
-           ```
-         - Similarly for mutations:
-           ```typescript
-           // mutations/types.ts
-           import { z } from "zod";
-           import { Database } from "@/db";
-           import { Session } from "@/lib/auth/types";
-           import { updateItemSchema } from "../validators";
-
-           export type UpdateItemInput = z.infer<typeof updateItemSchema>;
-
-           export interface ItemMutationContext<T> {
-             input: T;
-             db: Database;
-             session: Session;
-           }
-           ```
-         - Consistently use these types across all implementations
-         - Derive input types from Zod schemas using z.infer
-         - Export Database type from a central location (e.g., @/db)
-
-      6. oRPC Context Usage:
-         - Always use context for database access:
-           ```typescript
-           // Bad: Importing db directly
-           import { db } from "@/server/db";
-
-           // Good: Using db from context
-           export const myQuery = protectedProcedure.handler(async ({ context }) => {
-             const { db, session } = context;
-             // Extract db from context and pass to implementation
-             return await getItem({ db, session });
-           });
-           ```
-         - Always destructure context in the procedure definition:
-           ```typescript
-           // Good: Destructuring context
-           export const getItem = protectedProcedure.handler(async ({ context }) => {
-             const { db, session } = context;
-             return await getItemImpl({ db, session });
-           });
-           ```
-
-      7. Protected Procedures:
-         - Use protectedProcedure for authenticated routes
-         - Import from centralized location
-         - Properly type context and return values
-         - Use meta for role-based access:
-           ```typescript
-           // Good: Using meta for role-based access
-           export const adminQuery = protectedProcedure
-             .meta({ roles: ["admin"] })
-             .input(adminSchema)
-             .handler(async ({ context, input }) => {
-               const { db, session } = context;
-               // Implementation
-             });
-           ```
-
-      8. DB Operation Patterns:
-         - Use drizzle ORM's query builder for complex queries:
-           ```typescript
-           // Good: Using query builder
-           const result = await db.query.user.findFirst({
-             where: eq(user.id, userId),
-             with: {
-               preferences: true,
-             },
-           });
-           ```
-         - Use drizzle ORM's prepared statements for simple operations:
-           ```typescript
-           // Good: Using prepared statements
-           await db
-             .update(user)
-             .set({
-               name: fullName,
-               updatedAt: new Date(),
-             })
-             .where(eq(user.id, userId));
-           ```
-         - Properly handle database errors:
-           ```typescript
-           // Good: Error handling
-           try {
-             const result = await db.query.user.findFirst({
-               where: eq(user.id, userId),
-             });
-             return result;
-           } catch (error) {
-             console.error("Database error:", error);
-             throw new ORPCError(
-               "INTERNAL_SERVER_ERROR",
-               { message: "Failed to fetch user data" }
-             );
-           }
-           ```
-
-      9. Data Access Patterns:
-         - THREE ways to use oRPC in server components:
-           * Use `queryClient.prefetchQuery(orpc.procedure.queryOptions())` to prepare data for client components
-           * Use `api.procedure()` for direct server-side data access when not used by client
-           * Use `orpc.procedure.queryOptions()` to prepare options without fetching
-         - AVOID duplicate data fetching by NOT using both prefetch and api calls for the same data
-         - ALWAYS wrap client components with `<HydrateClient>` for hydration
-
-      10. Client Component Organization:
-         - Place client components in a `_components` directory with `.client.tsx` suffix
-         - Client components should use suspense queries to access prefetched data
-         - Wrap client components in `<Suspense>` for loading states
-         - Handle client-side errors properly
-
-      11. Query Invalidation Best Practices:
-         - When invalidating queries, prefer using queryOptions over manual queryKey:
-           ```typescript
-           // Good: Using queryOptions (preferred when available)
-           queryClient.invalidateQueries(
-             orpc.user.getUserPreferences.queryOptions()
-           );
-
-           // Acceptable: Using queryKey for broader invalidation
-           queryClient.invalidateQueries({
-             queryKey: [["organization"]]
-           });
-           ```
-         - Invalidate AFTER a successful mutation to ensure data is refreshed
-         - Keep invalidation logic centralized in mutation callbacks when possible
-
-      12. React Hook Form with oRPC:
-         - Initialize forms with direct values from suspense queries:
-           ```typescript
-           // Good: Direct initialization with suspense query data
-           const { data: settings } = useSuspenseQuery(
-             orpc.settings.getSettings.queryOptions()
-           );
-
-           const { register, handleSubmit, reset, setValue, watch } = useForm({
-             defaultValues: {
-               setting1: settings?.setting1 ?? defaultValue,
-               setting2: settings?.setting2 ?? defaultValue,
-             }
-           });
-           ```
-         - Keep form state separate from server state during editing
-         - Only sync with server when explicitly saving changes
-         - For discarding changes, reset directly using the initial values:
-           ```typescript
-           // Store initial values for reset
-           const initialValues = React.useMemo(() => ({
-             setting1: settings?.setting1 ?? defaultValue,
-             // other settings...
-           }), [settings]);
-
-           const handleDiscard = () => {
-             reset(initialValues);
-           };
-           ```
-         - After successful save, reset the form with the new data:
-           ```typescript
-           // After successful save
-           await updateSettings(data);
-           reset(data); // Simple reset with new data
-           ```
-
-      13. Pattern: Server Component with Client Components
-         ```typescript
-         // app/settings/page.tsx (Server Component)
-         import { getQueryClient, HydrateClient } from '@/orpc/query/hydration';
-         import { orpc } from '@/orpc/client';
-         import { Suspense } from 'react';
-         import ClientComponent from './_components/client-component.client';
-
-         export default async function SettingsPage() {
-           const queryClient = getQueryClient();
-
-           // Prefetch data for client components
-           queryClient.prefetchQuery(orpc.user.getUserPreferences.queryOptions());
-
-           return (
-             <HydrateClient client={queryClient}>
-               <Suspense fallback={<div>Loading...</div>}>
-                 <ClientComponent />
-               </Suspense>
-             </HydrateClient>
-           );
-         }
-         ```
-
-      14. Pattern: Client Component with Suspense Query
-         ```typescript
-         // _components/client-component.client.tsx
-         'use client';
-
-         import { orpc } from '@/orpc/client';
-         import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-         export default function ClientComponent() {
-           const queryClient = useQueryClient();
-
-           // Access prefetched data with suspense query
-           const { data } = useSuspenseQuery(
-             orpc.user.getUserPreferences.queryOptions()
-           );
-
-           // Mutation with proper error handling
-           const { mutateAsync, isPending } = useMutation(
-             orpc.user.updatePreferences.mutationOptions({
-                onError: (error) => {
-                    // Handle error
-                },
-                onSuccess: () => {
-                    // Invalidate with queryOptions or queryKey
-                    queryClient.invalidateQueries(
-                        orpc.user.getUserPreferences.queryOptions()
-                    );
-                }
-             }),
-           );
-
-           return (
-             // Component implementation
-           );
-         }
-         ```
-
-      15. Mutation System Requirements:
-          - **MANDATORY**: ALL mutations MUST use `orpc.procedure.mutationOptions()` with `useMutation`
-          - **PROHIBITED**: Direct fetch calls, custom mutation hooks, or any non-oRPC mutation patterns
-          - **REQUIRED**: All mutations must use proper invalidation strategies
-          - **PATTERN**: Standard mutation structure:
-            ```typescript
-            // Required pattern for ALL mutations
-            const { mutateAsync: updateData, isPending } = useMutation(
-              orpc.model.updateProcedure.mutationOptions({
-                meta: {
-                  invalidateQueries: [orpc.model.getProcedure.key()],
-                },
-                onSuccess: () => {
-                  // Additional success logic
-                },
-                onError: (error) => {
-                  // Handle error appropriately
-                }
-              })
-            );
-            ```
-          - **INVALIDATION**: Use `meta.invalidateQueries` for automatic invalidation or manual `queryClient.invalidateQueries()` in callbacks
-          - **ERROR HANDLING**: Always handle errors appropriately with user feedback
-
-      16. Parameter Consistency for Implementation Functions:
-          - Always use destructured parameters with consistent naming:
-            ```typescript
-            // Good: Consistent destructured parameters
-            export async function getItem({ db, session }: ItemQueryContext) {
-              // Implementation
-            }
-
-            export async function getItemWithInput({
-              db,
-              session,
-              input
-            }: ItemQueryContextWithInput<GetItemInput>) {
-              // Implementation
-            }
-            ```
-          - Keep parameter order consistent across all implementations
-          - Use appropriate context types for each function
-
-      17. Context Reusability Between Query and Mutation:
-          - Consider creating a shared base context when appropriate:
-            ```typescript
-            // shared-types.ts
-            import { Database } from "@/db";
-            import { Session } from "@/lib/auth/types";
-
-            export interface BaseContext {
-              db: Database;
-              session: Session;
-            }
-
-            // Then in queries/types.ts
-            import { BaseContext } from "../shared-types";
-
-            export interface ItemQueryContext extends BaseContext {
-              // Additional query-specific context properties
-            }
-
-            // And in mutations/types.ts
-            import { BaseContext } from "../shared-types";
-
-            export interface ItemMutationContext<T> extends BaseContext {
-              input: T;
-              // Additional mutation-specific context properties
-            }
-            ```
-          - This promotes consistency and reduces duplication
-
-      18. Server Router Setup:
-          - Use `base.router()` from oRPC context:
-            ```typescript
-            // server/context.ts
-            export const base = os
-              .$context<{
+        ```typescript
+        // server/context.ts
+        import { os } from "@orpc/server";
+        import z from "zod";
+        export const base = os
+            .$context<{
                 headers: Headers;
                 db: Database;
                 pusherServer: Pusher;
-              }>()
-              .$meta<Meta>({ roles: undefined, permission: undefined });
+            }>()
+            .errors({
+                RATE_LIMIT_EXCEEDED: {
+                    status: 429,
+                    data: z.object({
+                        retryAfterSeconds: z.number(),
+                        totalRequests: z.number(),
+                        remainingRequests: z.number(),
+                    }),
+                },
+                UNAUTHORIZED: { status: 401 },
+                FORBIDDEN: { status: 403 },
+            })
+            .$meta<Meta>({ roles: undefined, permission: undefined });
+        ```
 
-            // server/routers/user/router.ts
-            import { base } from "@/server/context";
+        Example: Middleware reusing shared errors (no .errors() here)
 
-            export const userRouter = base.router({
-              getUser: protectedProcedure.handler(async ({ context }) => {
-                // Implementation
-              }),
+        ```typescript
+        // server/middleware/auth.middleware.ts
+        export const authMiddleware = base.middleware(
+            async ({ next, errors }) => {
+                const session = await getServerSession();
+                if (!session) throw errors.UNAUTHORIZED();
+                return next({ context: { session } });
+            },
+        );
+        ```
+
+        Bad: Defining errors in middleware (NOT ALLOWED)
+
+        ```typescript
+        // ❌ Do not define .errors() in middleware
+        export const authMiddleware = base
+            .errors({ UNAUTHORIZED: { status: 401 } })
+            .middleware(async ({ next, errors }) => {
+                /* ... */
+            });
+        ```
+
+        **Complete Error Definition Pattern**:
+
+        ```typescript
+        // procedure-specific errors with status codes
+        export const updateUserProfileBase = protectedProcedure
+            .errors({
+                EMAIL_ALREADY_EXISTS: {
+                    status: 409,
+                },
+                PROFILE_UPDATE_FORBIDDEN: {
+                    status: 403,
+                },
+            })
+            .input(updateUserProfileSchema);
+        ```
+
+    4. **MANDATORY Procedure Definition Pattern**: Base + Handler + Call
+        - **REQUIRED**: All procedures MUST use the base + handler + call pattern
+        - **PROHIBITED**: Direct inline handlers in router definitions
+        - Define base procedures with specific errors only (NOT generic INTERNAL_SERVER_ERROR)
+        - Create separate handler functions using the base
+        - Use the `call` function in router to connect base and handler
+        - **MINIMAL COMMENTING**: Avoid numbered comments and explanatory comments
+
+        **Standard Pattern (MANDATORY)**:
+
+        ```typescript
+        // queries/get-item.ts
+        import { eq } from "drizzle-orm";
+        import { items } from "@/db/schema";
+        import { protectedProcedure } from "@/server/procedure/protected.procedure";
+        import { getItemSchema } from "../validators";
+
+        export const getItemBase = protectedProcedure
+            .errors({
+                ITEM_NOT_FOUND: {
+                    status: 404,
+                },
+            })
+            .input(getItemSchema);
+
+        export const getItemHandler = getItemBase.handler(
+            async ({ input, context, errors }) => {
+                const { db, session } = context;
+
+                const item = await db.query.items.findFirst({
+                    where: eq(items.id, input.id),
+                });
+
+                if (!item) {
+                    throw errors.ITEM_NOT_FOUND();
+                }
+
+                return item;
+            },
+        );
+        ```
+
+        **Router Definition (MANDATORY)**:
+
+        ```typescript
+        // router.ts
+        import { call } from "@orpc/server";
+        import { base } from "@/server/context";
+        import { getItemBase, getItemHandler } from "./queries";
+
+        export const modelRouter = base.router({
+            getItem: getItemBase
+                .route({ method: "GET" })
+                .meta({ roles: ["admin"] })
+                .handler(async ({ input, context }) => {
+                    return await call(getItemHandler, input, {
+                        context,
+                    });
+                }),
+        });
+        ```
+
+        **Benefits of this pattern:**
+        - Clean separation of validation, business logic, and routing
+        - Reusable base procedures and handlers
+        - Better testability of individual components
+        - Custom error handling with typed errors
+        - Consistent error structure across procedures
+
+    5. HTTP Method Selection:
+        - ALWAYS specify the correct HTTP method for all procedures using .route({ method: "..." })
+        - Choose methods based on semantic purpose, not just read vs write:
+
+        **GET** - Read operations (no side effects):
+
+        ```typescript
+        // All query operations
+        getUser: protectedProcedure
+          .route({ method: "GET" })
+          .handler(async ({ context }) => {
+            return await getUser({ db, session });
+          }),
+
+        listItems: protectedProcedure
+          .route({ method: "GET" })
+          .input(listSchema)
+          .handler(async ({ context, input }) => {
+            return await listItems({ db, session, input });
+          }),
+        ```
+
+        **POST** - Create new resources or trigger actions (side effects):
+
+        ```typescript
+        // Creating, sending emails, triggering actions
+        sendInvitation: protectedProcedure
+          .route({ method: "POST" })
+          .input(invitationSchema)
+          .handler(async ({ context, input }) => {
+            return await sendInvitation({ db, session, input });
+          }),
+        ```
+
+        **PUT** - Replace entire resources or upsert operations:
+
+        ```typescript
+        // Full replacement or upsert (create or replace)
+        saveUserPreferences: protectedProcedure
+          .route({ method: "PUT" })
+          .input(preferencesSchema)
+          .handler(async ({ context, input }) => {
+            return await saveUserPreferences({ db, session, input });
+          }),
+        ```
+
+        **PATCH** - Partial updates to existing resources:
+
+        ```typescript
+        // Partial updates, status changes, toggle operations
+        updateUserProfile: protectedProcedure
+          .route({ method: "PATCH" })
+          .input(profileUpdateSchema)
+          .handler(async ({ context, input }) => {
+            return await updateUserProfile({ db, session, input });
+          }),
+
+        toggleSetting: protectedProcedure
+          .route({ method: "PATCH" })
+          .input(toggleSchema)
+          .handler(async ({ context, input }) => {
+            return await toggleSetting({ db, session, input });
+          }),
+        ```
+
+        **DELETE** - Remove or cancel resources:
+
+        ```typescript
+        // Canceling, removing, deleting
+        cancelSubscription: protectedProcedure
+          .route({ method: "DELETE" })
+          .input(cancelSchema)
+          .handler(async ({ context, input }) => {
+            return await cancelSubscription({ db, session, input });
+          }),
+        ```
+
+        **Method Selection Guidelines:**
+        - GET: Reading data, health checks, exports, portal URLs
+        - POST: Creating resources, sending emails, triggering workflows
+        - PUT: Saving entire settings, upserting preferences, full replacements
+        - PATCH: Updating profiles, changing status, toggling features
+        - DELETE: Canceling subscriptions, removing resources, banning users
+
+    6. Automatic Type Inference:
+        - oRPC automatically infers types from base procedures
+        - No need for local types files - context and input are typed automatically
+        - Zod schemas in validators.ts provide input type validation
+        - Database and session context types come from oRPC base procedures
+
+    7. oRPC Context Usage:
+        - Always use context for database access:
+
+            ```typescript
+            // Bad: Importing db directly
+            import { db } from "@/server/db";
+
+            // Good: Using db from context
+            export const myQuery = protectedProcedure.handler(
+                async ({ context }) => {
+                    const { db, session } = context;
+                    // Extract db from context and pass to implementation
+                    return await getItem({ db, session });
+                },
+            );
+            ```
+
+        - Always destructure context in the procedure definition:
+            ```typescript
+            // Good: Destructuring context
+            export const getItem = protectedProcedure.handler(
+                async ({ context }) => {
+                    const { db, session } = context;
+                    return await getItemImpl({ db, session });
+                },
+            );
+            ```
+
+    8. Protected Procedures:
+        - Use protectedProcedure for authenticated routes
+        - Import from centralized location
+        - Properly type context and return values
+        - Use meta for role-based access:
+            ```typescript
+            // Good: Using meta for role-based access
+            export const adminQuery = protectedProcedure
+                .meta({ roles: ["admin"] })
+                .input(adminSchema)
+                .handler(async ({ context, input }) => {
+                    const { db, session } = context;
+                    // Implementation
+                });
+            ```
+
+    9. DB Operation Patterns:
+        - Use drizzle ORM's query builder for complex queries:
+            ```typescript
+            // Good: Using query builder
+            const result = await db.query.user.findFirst({
+                where: eq(user.id, userId),
+                with: {
+                    preferences: true,
+                },
+            });
+            ```
+        - Use drizzle ORM's prepared statements for simple operations:
+            ```typescript
+            // Good: Using prepared statements
+            await db
+                .update(user)
+                .set({
+                    name: fullName,
+                    updatedAt: new Date(),
+                })
+                .where(eq(user.id, userId));
+            ```
+        - Properly handle database errors:
+            ```typescript
+            // Good: Error handling
+            try {
+                const result = await db.query.user.findFirst({
+                    where: eq(user.id, userId),
+                });
+                return result;
+            } catch (error) {
+                console.error("Database error:", error);
+                throw new ORPCError("INTERNAL_SERVER_ERROR", {
+                    message: "Failed to fetch user data",
+                });
+            }
+            ```
+
+    10. Data Access Patterns:
+        - THREE ways to use oRPC in server components:
+            - Use `queryClient.prefetchQuery(orpc.procedure.queryOptions())` to prepare data for client components
+            - Use `api.procedure()` for direct server-side data access when not used by client
+            - Use `orpc.procedure.queryOptions()` to prepare options without fetching
+        - AVOID duplicate data fetching by NOT using both prefetch and api calls for the same data
+        - ALWAYS wrap client components with `<HydrateClient>` for hydration
+
+    11. Client Component Organization:
+        - Place client components in a `_components` directory with `.client.tsx` suffix
+        - Client components should use suspense queries to access prefetched data
+        - Wrap client components in `<Suspense>` for loading states
+        - Handle client-side errors properly
+
+    12. Query Invalidation Best Practices:
+        - When invalidating queries, prefer using queryOptions over manual queryKey:
+
+            ```typescript
+            // Good: Using queryOptions (preferred when available)
+            queryClient.invalidateQueries(
+                orpc.user.getUserPreferences.queryOptions(),
+            );
+
+            // Acceptable: Using queryKey for broader invalidation
+            queryClient.invalidateQueries({
+                queryKey: [["organization"]],
             });
             ```
 
-      19. Client Setup and Query Utils:
-          - Use createTanstackQueryUtils for client integration:
+        - Invalidate AFTER a successful mutation to ensure data is refreshed
+        - Keep invalidation logic centralized in mutation callbacks when possible
+
+    13. React Hook Form with oRPC:
+        - Initialize forms with direct values from suspense queries:
+
+            ```typescript
+            // Good: Direct initialization with suspense query data
+            const { data: settings } = useSuspenseQuery(
+                orpc.settings.getSettings.queryOptions(),
+            );
+
+            const { register, handleSubmit, reset, setValue, watch } = useForm({
+                defaultValues: {
+                    setting1: settings?.setting1 ?? defaultValue,
+                    setting2: settings?.setting2 ?? defaultValue,
+                },
+            });
+            ```
+
+        - Keep form state separate from server state during editing
+        - Only sync with server when explicitly saving changes
+        - For discarding changes, reset directly using the initial values:
+
+            ```typescript
+            // Store initial values for reset
+            const initialValues = React.useMemo(
+                () => ({
+                    setting1: settings?.setting1 ?? defaultValue,
+                    // other settings...
+                }),
+                [settings],
+            );
+
+            const handleDiscard = () => {
+                reset(initialValues);
+            };
+            ```
+
+        - After successful save, reset the form with the new data:
+            ```typescript
+            // After successful save
+            await updateSettings(data);
+            reset(data); // Simple reset with new data
+            ```
+
+    14. Pattern: Server Component with Client Components
+
+        ```typescript
+        // app/settings/page.tsx (Server Component)
+        import { getQueryClient, HydrateClient } from '@/orpc/query/hydration';
+        import { orpc } from '@/orpc/client';
+        import { Suspense } from 'react';
+        import ClientComponent from './_components/client-component.client';
+
+        export default async function SettingsPage() {
+          const queryClient = getQueryClient();
+
+          // Prefetch data for client components
+          queryClient.prefetchQuery(orpc.user.getUserPreferences.queryOptions());
+
+          return (
+            <HydrateClient client={queryClient}>
+              <Suspense fallback={<div>Loading...</div>}>
+                <ClientComponent />
+              </Suspense>
+            </HydrateClient>
+          );
+        }
+        ```
+
+    15. Pattern: Client Component with Suspense Query
+
+        ```typescript
+        // _components/client-component.client.tsx
+        'use client';
+
+        import { orpc } from '@/orpc/client';
+        import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+        export default function ClientComponent() {
+          const queryClient = useQueryClient();
+
+          // Access prefetched data with suspense query
+          const { data } = useSuspenseQuery(
+            orpc.user.getUserPreferences.queryOptions()
+          );
+
+          // Mutation with proper error handling
+          const { mutateAsync, isPending } = useMutation(
+            orpc.user.updatePreferences.mutationOptions({
+               onError: (error) => {
+                   // Handle error
+               },
+               onSuccess: () => {
+                   // Invalidate with queryOptions or queryKey
+                   queryClient.invalidateQueries(
+                       orpc.user.getUserPreferences.queryOptions()
+                   );
+               }
+            }),
+          );
+
+          return (
+            // Component implementation
+          );
+        }
+        ```
+
+    16. Mutation System Requirements:
+        - **MANDATORY**: ALL mutations MUST use `orpc.procedure.mutationOptions()` with `useMutation`
+        - **PROHIBITED**: Direct fetch calls, custom mutation hooks, or any non-oRPC mutation patterns
+        - **REQUIRED**: All mutations must use proper invalidation strategies
+        - **PATTERN**: Standard mutation structure:
+            ```typescript
+            // Required pattern for ALL mutations
+            const { mutateAsync: updateData, isPending } = useMutation(
+                orpc.model.updateProcedure.mutationOptions({
+                    meta: {
+                        invalidateQueries: [orpc.model.getProcedure.key()],
+                    },
+                    onSuccess: () => {
+                        // Additional success logic
+                    },
+                    onError: (error) => {
+                        // Handle error appropriately - see Custom Error Handling section
+                    },
+                }),
+            );
+            ```
+        - **INVALIDATION**: Use `meta.invalidateQueries` for automatic invalidation or manual `queryClient.invalidateQueries()` in callbacks
+        - **ERROR HANDLING**: Always handle errors appropriately with user feedback - see Custom Error Handling section
+
+    17. Handler Function Best Practices:
+        - Use destructured parameters from oRPC context and input:
+            ```typescript
+            // Good: Using oRPC context destructuring
+            export const getItemHandler = getItemBase.handler(
+                async ({ input, context }) => {
+                    const { db, session } = context;
+                    // Implementation uses automatically typed context and input
+                },
+            );
+            ```
+        - Keep parameter destructuring consistent across all handlers
+        - Let oRPC handle all type inference automatically
+
+    18. Advanced Handler Pattern with Base Procedures:
+        - For complex handlers with custom error definitions, use the base + handler + call pattern:
+
+            ```typescript
+            // mutations/procedure-name.ts
+            import { protectedProcedure } from "@/server/procedure/protected.procedure";
+            import { procedureNameSchema } from "../validators";
+
+            export const procedureNameBase = protectedProcedure
+                .errors({
+                    RESOURCE_NOT_FOUND: {
+                        status: 404,
+                    },
+                    REQUEST_NOT_APPROVED: {
+                        status: 403,
+                    },
+                })
+                .input(procedureNameSchema);
+
+            export const procedureNameHandler = procedureNameBase.handler(
+                async ({ input, context, errors }) => {
+                    const { db, session } = context;
+
+                    const item = await db.query.items.findFirst({
+                        where: eq(items.id, input.id),
+                    });
+
+                    if (!item) {
+                        throw errors.RESOURCE_NOT_FOUND();
+                    }
+
+                    return { success: true };
+                },
+            );
+
+            // router.ts
+            import { call } from "@orpc/server";
+            import {
+                procedureNameBase,
+                procedureNameHandler,
+            } from "./mutations/procedure-name";
+
+            export const modelRouter = base.router({
+                procedureName: procedureNameBase
+                    .route({ method: "POST" })
+                    .meta({ roles: ["admin"] })
+                    .handler(async ({ input, context }) => {
+                        return await call(procedureNameHandler, input, {
+                            context,
+                        });
+                    }),
+            });
+            ```
+
+        - **Benefits**: Clean separation, reusability, testability, typed errors
+
+    19. Server Router Setup:
+        - Use `base.router()` from oRPC context:
+
+            ```typescript
+            // server/context.ts
+            export const base = os
+                .$context<{
+                    headers: Headers;
+                    db: Database;
+                    pusherServer: Pusher;
+                }>()
+                .$meta<Meta>({ roles: undefined, permission: undefined });
+
+            // server/routers/user/router.ts
+            import { call } from "@orpc/server";
+            import { base } from "@/server/context";
+            import { getUserBase, getUserHandler } from "./queries";
+
+            export const userRouter = base.router({
+                getUser: getUserBase
+                    .route({ method: "GET" })
+                    .handler(async ({ input, context }) => {
+                        return await call(getUserHandler, input, { context });
+                    }),
+            });
+            ```
+
+    20. Client Setup and Query Utils:
+        - Use createTanstackQueryUtils for client integration:
+
             ```typescript
             // orpc/client.ts
             import { createORPCClient } from "@orpc/client";
@@ -528,140 +705,420 @@ actions:
             export const orpc = createTanstackQueryUtils(orpcClient);
             ```
 
-examples:
-  - input: |
-      // Good: oRPC procedure definition using .handler()
-      export const getUser = protectedProcedure.handler(async ({ context }) => {
-        const { db, session } = context;
-        return await getUserImpl({ db, session });
-      });
-    output: "Use .handler() for defining oRPC procedures"
+    21. **MANDATORY Frontend Validation Pattern**:
+        - **REQUIRED**: Frontend components MUST import validation schemas from backend validators
+        - **PROHIBITED**: Defining validation schemas inline in frontend components
+        - **PATTERN**: Import from `@/server/routers/{model}/validators` in frontend
+        - **CONSISTENCY**: Use the same validation schemas for both frontend forms and backend APIs
+        - **ORGANIZATION**: Shared validation schemas should be in backend validator files
+        - Move any duplicated or inline frontend schemas to appropriate backend validators
 
-  - input: |
-      // Good: oRPC client usage with queryOptions
-      const { data } = useQuery(
-        orpc.user.getUserPreferences.queryOptions()
-      );
-    output: "Use orpc.procedure.queryOptions() with useQuery"
+        **Standard Import Pattern (MANDATORY)**:
 
-  - input: |
-      // Good: oRPC prefetch pattern
-      queryClient.prefetchQuery(orpc.user.getUserPreferences.queryOptions());
-    output: "Use queryClient.prefetchQuery with orpc.procedure.queryOptions()"
+        ```typescript
+        // frontend component
+        import { updateUserProfileSchema } from "@/server/routers/user/validators";
+        import { toggleNotificationSettingSchema } from "@/server/routers/notification/validators";
 
-  - input: |
-      // Good: oRPC router definition
-      export const userRouter = base.router({
-        getUser: protectedProcedure.handler(async ({ context }) => {
-          // Implementation
-        }),
-      });
-    output: "Use base.router() and .handler() for oRPC routers"
-
-  - input: |
-      // Good: oRPC query invalidation
-      queryClient.invalidateQueries(
-        orpc.user.getUserPreferences.queryOptions()
-      );
-    output: "Use orpc.procedure.queryOptions() for query invalidation"
-
-  - input: |
-      // Good: oRPC mutation pattern
-      const { mutateAsync } = useMutation(
-        orpc.user.updateProfile.mutationOptions()
-      );
-    output: "Use orpc.procedure.mutationOptions() with useMutation"
-
-  - input: |
-      // Bad: Not using typed context properly
-      export const getItem = protectedProcedure.handler(async ({ context, input }) => {
-        return await getItemImpl(input, context.db, context.session);
-      });
-
-      // Good: Using typed context with destructuring
-      export const getItem = protectedProcedure
-        .input(getItemSchema)
-        .handler(async ({ context, input }) => {
-          const { db, session } = context;
-          return await getItemImpl({ db, session, input });
+        // use in form
+        const form = useForm({
+            resolver: zodResolver(updateUserProfileSchema),
         });
+        ```
+
+        **Benefits**:
+        - Single source of truth for validation
+        - Consistent validation between frontend and backend
+        - Reduced code duplication
+        - Easier maintenance and updates
+
+    22. **Custom Error Handling with isDefinedError**:
+        - **REQUIRED**: Use `isDefinedError` and `safe` functions for type-safe custom error handling
+        - **PATTERN**: Wrap mutations with `safe()` for explicit error handling or use `onError` callbacks with `isDefinedError`
+        - **BENEFITS**: Type-safe access to custom error codes and data, better UX with specific error messages
+
+        **Method 1: Using safe() wrapper (RECOMMENDED for complex error handling):**
+
+        ```typescript
+        import { safe, isDefinedError } from "@orpc/client";
+
+        const { mutateAsync: updateData } = useMutation(
+            orpc.model.updateData.mutationOptions({
+                meta: {
+                    invalidateQueries: [orpc.model.getData.key()],
+                },
+            }),
+        );
+
+        const handleUpdate = async (data: UpdateData) => {
+            const [error, result] = await safe(updateData(data));
+
+            if (error) {
+                if (isDefinedError(error)) {
+                    // Handle specific custom errors in a type-safe way
+                    switch (error.code) {
+                        case "NO_ACTIVE_ORGANIZATION":
+                            toast.error("Please select an organization first");
+                            break;
+                        case "ACTIVE_ORGANIZATION_NOT_FOUND":
+                            toast.error("Organization not found");
+                            break;
+                        case "INSUFFICIENT_PERMISSIONS":
+                            toast.error(
+                                "You don't have permission for this action",
+                            );
+                            break;
+                        default:
+                            toast.error(error.message || "An error occurred");
+                    }
+                } else {
+                    // Handle network/unexpected errors
+                    toast.error("Something went wrong. Please try again.");
+                    console.error("Unexpected error:", error);
+                }
+                return;
+            }
+
+            // Handle success
+            toast.success("Updated successfully");
+        };
+        ```
+
+        **Method 2: Using onError callback (GOOD for simple error handling):**
+
+        ```typescript
+        const { mutateAsync: updateData } = useMutation(
+            orpc.model.updateData.mutationOptions({
+                meta: {
+                    invalidateQueries: [orpc.model.getData.key()],
+                },
+                onSuccess: () => {
+                    toast.success("Updated successfully");
+                },
+                onError: (error) => {
+                    if (isDefinedError(error)) {
+                        switch (error.code) {
+                            case "NO_ACTIVE_ORGANIZATION":
+                                toast.error(
+                                    "Please select an organization first",
+                                );
+                                break;
+                            case "ACTIVE_ORGANIZATION_NOT_FOUND":
+                                toast.error("Organization not found");
+                                break;
+                            default:
+                                toast.error(
+                                    error.message || "An error occurred",
+                                );
+                        }
+                    } else {
+                        toast.error("Something went wrong. Please try again.");
+                        console.error("Unexpected error:", error);
+                    }
+                },
+            }),
+        );
+        ```
+
+        **Query Error Handling:**
+
+        ```typescript
+        const { data, error, isLoading } = useQuery(
+          orpc.organization.getActiveOrganization.queryOptions({
+            retry: (failureCount, error) => {
+              // Don't retry on defined business logic errors
+              if (isDefinedError(error)) {
+                return false;
+              }
+              // Retry network errors up to 3 times
+              return failureCount < 3;
+            }
+          })
+        );
+
+        if (error && isDefinedError(error)) {
+          switch (error.code) {
+            case 'NO_ACTIVE_ORGANIZATION':
+              return <NoOrganizationSelected />;
+            case 'ACTIVE_ORGANIZATION_NOT_FOUND':
+              return <OrganizationNotFound />;
+            default:
+              return <GenericError message={error.message} />;
+          }
+        }
+        ```
+
+        **Guidelines:**
+        - Always use `isDefinedError()` to check if an error is a custom oRPC error
+        - Handle specific error codes with appropriate user feedback
+        - Use `safe()` wrapper for complex error handling logic
+        - Use `onError` callbacks for simple error display
+        - Don't retry queries on business logic errors (use retry callback)
+        - Log unexpected errors for debugging while showing user-friendly messages
+
+examples:
+
+- input: |
+  // Good: oRPC procedure definition using .handler()
+  export const getUser = protectedProcedure.handler(async ({ context }) => {
+  const { db, session } = context;
+  return await getUserImpl({ db, session });
+  });
+  output: "Use .handler() for defining oRPC procedures"
+
+- input: |
+  // Good: oRPC client usage with queryOptions
+  const { data } = useQuery(
+  orpc.user.getUserPreferences.queryOptions()
+  );
+  output: "Use orpc.procedure.queryOptions() with useQuery"
+
+- input: |
+  // Good: oRPC prefetch pattern
+  queryClient.prefetchQuery(orpc.user.getUserPreferences.queryOptions());
+  output: "Use queryClient.prefetchQuery with orpc.procedure.queryOptions()"
+
+- input: |
+  // Good: oRPC router definition
+  export const userRouter = base.router({
+  getUser: protectedProcedure.handler(async ({ context }) => {
+  // Implementation
+  }),
+  });
+  output: "Use base.router() and .handler() for oRPC routers"
+
+- input: |
+  // Good: oRPC query invalidation
+  queryClient.invalidateQueries(
+  orpc.user.getUserPreferences.queryOptions()
+  );
+  output: "Use orpc.procedure.queryOptions() for query invalidation"
+
+- input: |
+  // Good: oRPC mutation pattern
+  const { mutateAsync } = useMutation(
+  orpc.user.updateProfile.mutationOptions()
+  );
+  output: "Use orpc.procedure.mutationOptions() with useMutation"
+
+- input: |
+  // Bad: Not using typed context properly
+  export const getItem = protectedProcedure.handler(async ({ context, input }) => {
+  return await getItemImpl(input, context.db, context.session);
+  });
+
+    // Good: Using typed context with destructuring
+    export const getItem = protectedProcedure
+    .input(getItemSchema)
+    .handler(async ({ context, input }) => {
+    const { db, session } = context;
+    return await getItemImpl({ db, session, input });
+    });
     output: "Always destructure context and pass as object to implementation functions"
 
-  - input: |
-      // Bad: Using 'ctx' parameter name
-      export const getUser = protectedProcedure.handler(async ({ ctx }) => {
-        const { db, session } = ctx;
-        // Implementation
-      });
+- input: |
+  // Bad: Using 'ctx' parameter name
+  export const getUser = protectedProcedure.handler(async ({ ctx }) => {
+  const { db, session } = ctx;
+  // Implementation
+  });
 
-      // Good: Using 'context' parameter name in oRPC
-      export const getUser = protectedProcedure.handler(async ({ context }) => {
-        const { db, session } = context;
-        // Implementation
-      });
+    // Good: Using 'context' parameter name in oRPC
+    export const getUser = protectedProcedure.handler(async ({ context }) => {
+    const { db, session } = context;
+    // Implementation
+    });
     output: "Use 'context' instead of 'ctx' in oRPC handlers"
 
-  - input: |
-      // Bad: Missing HTTP method specification
-      export const getUser = protectedProcedure.handler(async ({ context }) => {
-        const { db, session } = context;
-        return await getUser({ db, session });
-      });
+- input: |
+  // Bad: Missing HTTP method specification
+  export const getUser = protectedProcedure.handler(async ({ context }) => {
+  const { db, session } = context;
+  return await getUser({ db, session });
+  });
 
-      updateProfile: protectedProcedure.handler(async ({ context, input }) => {
-        const { db, session } = context;
-        return await updateProfile({ db, session, input });
-      });
+    updateProfile: protectedProcedure.handler(async ({ context, input }) => {
+    const { db, session } = context;
+    return await updateProfile({ db, session, input });
+    });
 
-      // Good: Correct HTTP methods specified
-      export const getUser = protectedProcedure
-        .route({ method: "GET" })
-        .handler(async ({ context }) => {
-          const { db, session } = context;
-          return await getUser({ db, session });
-        });
+    // Good: Correct HTTP methods specified
+    export const getUser = protectedProcedure
+    .route({ method: "GET" })
+    .handler(async ({ context }) => {
+    const { db, session } = context;
+    return await getUser({ db, session });
+    });
 
-      updateProfile: protectedProcedure
-        .route({ method: "PATCH" })
-        .input(updateProfileSchema)
-        .handler(async ({ context, input }) => {
-          const { db, session } = context;
-          return await updateProfile({ db, session, input });
-        });
+    updateProfile: protectedProcedure
+    .route({ method: "PATCH" })
+    .input(updateProfileSchema)
+    .handler(async ({ context, input }) => {
+    const { db, session } = context;
+    return await updateProfile({ db, session, input });
+    });
     output: "Always specify HTTP methods using .route({ method: '...' }) - GET for reads, POST for creates, PUT for upserts, PATCH for updates, DELETE for removals"
 
-  - input: |
-      // PROHIBITED: Using non-oRPC mutation patterns
-      const updateData = async (data) => {
-        const response = await fetch('/api/update', {
-          method: 'POST',
-          body: JSON.stringify(data)
-        });
-        return response.json();
-      };
+- input: |
+  // PROHIBITED: Using non-oRPC mutation patterns
+  const updateData = async (data) => {
+  const response = await fetch('/api/update', {
+  method: 'POST',
+  body: JSON.stringify(data)
+  });
+  return response.json();
+  };
 
-      const { mutate } = useMutation({
-        mutationFn: updateData,
-        onSuccess: () => queryClient.invalidateQueries(['data'])
-      });
+    const { mutate } = useMutation({
+    mutationFn: updateData,
+    onSuccess: () => queryClient.invalidateQueries(['data'])
+    });
 
-      // REQUIRED: Using oRPC mutation pattern
-      const { mutateAsync: updateData } = useMutation(
-        orpc.model.updateData.mutationOptions({
-          meta: {
-            invalidateQueries: [orpc.model.getData.key()],
-          },
-          onSuccess: () => {
-            // Additional success logic
-          },
-          onError: (error) => {
-            console.error('Update failed:', error);
-          }
-        })
-      );
+    // REQUIRED: Using oRPC mutation pattern
+    const { mutateAsync: updateData } = useMutation(
+    orpc.model.updateData.mutationOptions({
+    meta: {
+    invalidateQueries: [orpc.model.getData.key()],
+    },
+    onSuccess: () => {
+    // Additional success logic
+    },
+    onError: (error) => {
+    console.error('Update failed:', error);
+    }
+    })
+    );
     output: "ALL mutations MUST use orpc.procedure.mutationOptions() - no fetch calls or custom mutation functions allowed"
 
+- input: |
+  // PROHIBITED: Individual file imports
+  import { getUserBase, getUserHandler } from "./queries/get-user";
+  import { listUsersBase, listUsersHandler } from "./queries/list-users";
+
+    // REQUIRED: Index file imports
+    import {
+    getUserBase,
+    getUserHandler,
+    listUsersBase,
+    listUsersHandler,
+    } from "./queries";
+    output: "MANDATORY: Always import from index files, never from individual files"
+
+- input: |
+  // PROHIBITED: Named exports in index files
+  export { getUserBase, getUserHandler } from "./get-user";
+  export { listUsersBase, listUsersHandler } from "./list-users";
+
+    // REQUIRED: Wildcard exports in index files
+
+    ```typescript
+    export * from "./get-user";
+    export * from "./list-users";
+    ```
+
+    output: "MANDATORY: Use 'export \* from' for all re-exports in index files"
+
+- input: |
+  // BAD: Generic error handling without isDefinedError
+  const { mutateAsync: updateData } = useMutation(
+  orpc.model.updateData.mutationOptions({
+  onError: (error) => {
+  toast.error("Something went wrong");
+  console.error(error);
+  }
+  })
+  );
+
+    // GOOD: Type-safe error handling with isDefinedError
+    const { mutateAsync: updateData } = useMutation(
+    orpc.model.updateData.mutationOptions({
+    onError: (error) => {
+    if (isDefinedError(error)) {
+    switch (error.code) {
+    case 'NO_ACTIVE_ORGANIZATION':
+    toast.error("Please select an organization first");
+    break;
+    case 'INSUFFICIENT_PERMISSIONS':
+    toast.error("You don't have permission for this action");
+    break;
+    default:
+    toast.error(error.message || "An error occurred");
+    }
+    } else {
+    toast.error("Something went wrong. Please try again.");
+    console.error("Unexpected error:", error);
+    }
+    }
+    })
+    );
+    output: "REQUIRED: Use isDefinedError for type-safe custom error handling in oRPC mutations"
+
+- input: |
+  // BAD: Try-catch without proper error differentiation
+  const handleUpdate = async (data) => {
+  try {
+  await updateMutation.mutateAsync(data);
+  toast.success("Updated successfully");
+  } catch (error) {
+  toast.error("Update failed");
+  }
+  };
+
+    // GOOD: Using safe() wrapper for explicit error handling
+    const handleUpdate = async (data) => {
+    const [error, result] = await safe(updateMutation.mutateAsync(data));
+
+                          if (error) {
+                            if (isDefinedError(error)) {
+                              switch (error.code) {
+                                case 'NO_ACTIVE_ORGANIZATION':
+                                  toast.error("Please select an organization first");
+                                  break;
+                                default:
+                                  toast.error(error.message || "Update failed");
+                              }
+                            } else {
+                              toast.error("Network error. Please try again.");
+                            }
+                            return;
+                          }
+
+                          toast.success("Updated successfully");
+
+    };
+    output: "RECOMMENDED: Use safe() wrapper for complex mutation error handling"
+
+- input: |
+  // BAD: Query error handling without type safety
+  const { data, error } = useQuery(orpc.model.getData.queryOptions());
+
+    if (error) {
+    return <div>Error: {error.message}</div>;
+    }
+
+    // GOOD: Type-safe query error handling
+    const { data, error } = useQuery(
+    orpc.model.getData.queryOptions({
+    retry: (failureCount, error) => {
+    if (isDefinedError(error)) return false;
+    return failureCount < 3;
+    }
+    })
+    );
+
+    if (error && isDefinedError(error)) {
+    switch (error.code) {
+    case 'NO_ACTIVE_ORGANIZATION':
+    return <NoOrganizationSelected />;
+    case 'INSUFFICIENT_PERMISSIONS':
+    return <AccessDenied />;
+    default:
+    return <GenericError message={error.message} />;
+    }
+    }
+    output: "REQUIRED: Use isDefinedError in query error handling and retry logic"
+
 metadata:
-  priority: high
-  version: 1.3
+priority: high
+version: 2.2
 </rule>
