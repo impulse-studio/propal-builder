@@ -92,7 +92,7 @@ const FeatureListComponent = ({
 
   return (
     <NodeViewWrapper
-      className="my-8 w-full transition-all"
+      className="group relative my-8 w-full transition-all"
       data-feature-list
       contentEditable={false}
     >

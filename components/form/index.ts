@@ -5,6 +5,5 @@ export { FormFileUpload } from "./form-file-upload";
 export { FormImageUpload } from "./form-image-upload";
 export { FormInput } from "./form-input";
 export { FormPassword } from "./form-password";
-export { FormRichTextEditor } from "./form-rich-text-editor";
 export { FormSelect } from "./form-select";
 export { FormTextarea } from "./form-textarea";

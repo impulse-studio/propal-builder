@@ -66,7 +66,7 @@ const CallToActionComponent = ({
 
   return (
     <NodeViewWrapper
-      className="my-8 w-full transition-all"
+      className="group relative my-8 w-full transition-all"
       data-call-to-action
       contentEditable={false}
     >
