@@ -157,7 +157,7 @@ export function TiptapEditorWithSlashCommands({
             <RichTextEditor
               content={content}
               onChange={setContent}
-              placeholder="Start writing your proposal..."
+              placeholder="Start writing or / to use commands"
               additionalExtensions={additionalExtensions}
               starterKitConfig={starterKitConfig}
               editorClassName={editorClassName}

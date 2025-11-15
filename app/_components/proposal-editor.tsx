@@ -75,7 +75,7 @@ function ProposalEditorContent({ content }: { content: unknown }) {
       Placeholder.configure({
         emptyEditorClass: "is-editor-empty",
         showOnlyWhenEditable: false,
-        placeholder: "Start writing your proposal...",
+        placeholder: "Start writing or / to use commands...",
       }),
       Highlight,
       Underline,
