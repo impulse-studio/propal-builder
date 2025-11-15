@@ -9,3 +9,11 @@ export const getPropalSchema = z.object({
 });
 
 export type GetPropalInput = z.infer<typeof getPropalSchema>;
+
+export const createPropalSchema = z.object({
+  qdrantCollectionId: z.string().min(1),
+  titre: z.string().min(1),
+  contenuJson: z.unknown(),
+});
+
+export type CreatePropalInput = z.infer<typeof createPropalSchema>;

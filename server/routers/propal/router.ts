@@ -1,5 +1,6 @@
 import { call } from "@orpc/server";
 import { base } from "@/server/context";
+import { createPropalBase, createPropalHandler } from "./mutations";
 import {
   getPropalBase,
   getPropalHandler,
@@ -20,6 +21,12 @@ export const propalRouter = base.router({
 
   getPropal: getPropalBase.handler(async ({ context, input }) => {
     return await call(getPropalHandler, input, {
+      context,
+    });
+  }),
+
+  createPropal: createPropalBase.handler(async ({ context, input }) => {
+    return await call(createPropalHandler, input, {
       context,
     });
   }),
