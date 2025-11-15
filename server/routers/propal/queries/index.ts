@@ -1,2 +1,2 @@
-export * from "./get-propals";
 export * from "./get-propal";
+export * from "./get-propals";
