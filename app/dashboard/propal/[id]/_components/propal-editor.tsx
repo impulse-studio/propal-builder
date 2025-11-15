@@ -1,11 +1,11 @@
 "use client";
 
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Color } from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import type { Editor } from "@tiptap/react";
 import { EditorContext } from "@tiptap/react";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import {
   CallToAction,
   FeatureList,
@@ -18,19 +18,39 @@ import {
   Root as SlashCmdRoot,
   useSlashCommandExtension,
 } from "@/components/custom/proposal-toolbar/slash-cmd";
-import { SlashCommandProvider } from "@/components/custom/proposal-toolbar/slash-command-provider";
 import { RichTextEditor } from "@/components/custom/rich-text-editor";
 import { cn } from "@/lib/utils";
-
 import { PasteDropExtension } from "@/lib/utils/tiptap/paste-drop-extension";
 import { ResizableImageExtension } from "@/lib/utils/tiptap/resizable-image-extension";
 import { SlashExtension } from "@/lib/utils/tiptap/slash-extension";
 import { uploadEditorImage } from "@/lib/utils/tiptap/upload-image";
+import { orpc } from "@/orpc/client";
 
-function TiptapEditorWithSlashCommands() {
+export function TiptapEditorWithSlashCommands({
+  propalId,
+}: {
+  propalId: string;
+}) {
+  const { data: propal } = useSuspenseQuery(
+    orpc.propal.getPropal.queryOptions({ input: { id: propalId } }),
+  );
+
   const [content, setContent] = useState("");
   const [editor, setEditor] = useState<Editor | null>(null);
   const slashCommandRef = useSlashCommandExtension();
+
+  useEffect(() => {
+    if (propal?.contenuJson && editor) {
+      const contentToLoad =
+        typeof propal.contenuJson === "string"
+          ? propal.contenuJson
+          : propal.contenuJson;
+      editor.commands.setContent(contentToLoad, { emitUpdate: false });
+      setContent(
+        typeof contentToLoad === "string" ? contentToLoad : editor.getHTML(),
+      );
+    }
+  }, [propal, editor]);
 
   const additionalExtensions = [
     TextStyle,
@@ -160,13 +180,5 @@ function TiptapEditorWithSlashCommands() {
         </EditorContext.Provider>
       </div>
     </div>
-  );
-}
-
-export default function TiptapPage() {
-  return (
-    <SlashCommandProvider>
-      <TiptapEditorWithSlashCommands />
-    </SlashCommandProvider>
   );
 }
