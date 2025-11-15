@@ -793,62 +793,6 @@ body {
   pointer-events: none;
 }
 
-/* Drag Handle Styles */
-.drag-handle-container {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  z-index: 50;
-  transition: opacity 0.2s ease-in-out;
-  cursor: grab;
-}
-
-.drag-handle-container:active {
-  cursor: grabbing;
-}
-
-.drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background-color: transparent;
-  transition: all 0.2s ease-in-out;
-  color: rgb(var(--text-soft-400));
-}
-
-.drag-handle:hover {
-  background-color: rgb(var(--bg-weak-50));
-  color: rgb(var(--text-sub-600));
-}
-
-.dark .drag-handle:hover {
-  background-color: rgb(var(--bg-weak-950));
-  color: rgb(var(--text-soft-400));
-}
-
-.drag-handle svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Dragging state */
-.drag-handle-container.is-dragging .drag-handle {
-  background-color: rgb(var(--bg-weak-100));
-  color: rgb(var(--text-strong-950));
-  transform: scale(1.1);
-}
-
-.dark .drag-handle-container.is-dragging .drag-handle {
-  background-color: rgb(var(--bg-weak-800));
-  color: rgb(var(--text-strong-100));
-}
-
 /* Visual feedback during drag */
 .ProseMirror.is-dragging {
   cursor: grabbing;
