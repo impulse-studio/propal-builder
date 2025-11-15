@@ -1,5 +1,4 @@
 import { os } from "@orpc/server";
-
 import type { Database } from "@/db";
 
 export const base = os
