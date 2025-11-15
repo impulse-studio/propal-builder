@@ -8,6 +8,13 @@
       "when": 1763220712994,
       "tag": "0000_glamorous_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763221174946,
+      "tag": "0001_lumpy_micromax",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,8 @@ export const propals = pgTable("propals", {
     .$defaultFn(() => ulid()),
   titre: text("titre").notNull(),
   contenuJson: jsonb("contenu_json").notNull(),
+  qdrantCollectionId: text("qdrant_collection_id").notNull(),
+
   dateCreation: timestamp("date_creation", { withTimezone: true })
     .defaultNow()
     .notNull(),
