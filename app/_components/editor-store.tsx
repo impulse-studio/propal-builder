@@ -1,7 +1,13 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 
 interface EditorStoreState {
   editor: Editor | null;
@@ -36,7 +42,10 @@ interface EditorStoreState {
     features?: string[];
     highlighted?: boolean;
   }) => Promise<void>;
-  insertFeatureList: (attrs?: { title?: string; features?: string[] }) => Promise<void>;
+  insertFeatureList: (attrs?: {
+    title?: string;
+    features?: string[];
+  }) => Promise<void>;
   insertCallToAction: (attrs?: {
     title?: string;
     description?: string;
@@ -79,15 +88,12 @@ export function EditorStoreProvider({
     forceUpdate({}); // Force re-render when editor changes
   }, []);
 
-  const applyEdit = useCallback(
-    (command: (editor: Editor) => void) => {
-      if (!editorRef.current) return;
-      if (editorRef.current.isDestroyed) return;
+  const applyEdit = useCallback((command: (editor: Editor) => void) => {
+    if (!editorRef.current) return;
+    if (editorRef.current.isDestroyed) return;
 
-      command(editorRef.current);
-    },
-    [],
-  );
+    command(editorRef.current);
+  }, []);
 
   const insertContent = useCallback(
     (content: string) => {
@@ -382,7 +388,11 @@ export function EditorStoreProvider({
             title: attrs?.title || "Standard Plan",
             price: attrs?.price || "$49",
             period: attrs?.period || "month",
-            features: attrs?.features || ["Feature 1", "Feature 2", "Feature 3"],
+            features: attrs?.features || [
+              "Feature 1",
+              "Feature 2",
+              "Feature 3",
+            ],
             highlighted: attrs?.highlighted || false,
           },
         })
@@ -390,7 +400,7 @@ export function EditorStoreProvider({
 
       // Force a small delay to ensure rendering is complete
       // This is a workaround for TipTap's async rendering
-      return new Promise<void>(resolve => setTimeout(resolve, 50));
+      return new Promise<void>((resolve) => setTimeout(resolve, 50));
     },
     [],
   );
@@ -411,13 +421,17 @@ export function EditorStoreProvider({
           type: "featureList",
           attrs: {
             title: attrs?.title || "Features",
-            features: attrs?.features || ["Feature 1", "Feature 2", "Feature 3"],
+            features: attrs?.features || [
+              "Feature 1",
+              "Feature 2",
+              "Feature 3",
+            ],
           },
         })
         .run();
 
       // Force a small delay to ensure rendering is complete
-      return new Promise<void>(resolve => setTimeout(resolve, 50));
+      return new Promise<void>((resolve) => setTimeout(resolve, 50));
     },
     [],
   );
@@ -443,7 +457,9 @@ export function EditorStoreProvider({
           type: "callToAction",
           attrs: {
             title: attrs?.title || "Ready to get started?",
-            description: attrs?.description || "Join thousands of satisfied customers today.",
+            description:
+              attrs?.description ||
+              "Join thousands of satisfied customers today.",
             buttonText: attrs?.buttonText || "Get Started",
             buttonLink: attrs?.buttonLink || "#",
           },
@@ -451,7 +467,7 @@ export function EditorStoreProvider({
         .run();
 
       // Force a small delay to ensure rendering is complete
-      return new Promise<void>(resolve => setTimeout(resolve, 50));
+      return new Promise<void>((resolve) => setTimeout(resolve, 50));
     },
     [],
   );
