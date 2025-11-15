@@ -11,7 +11,7 @@ export default function Home() {
         <Header />
         <main className="flex-1 overflow-hidden">
           <ResizableLayout
-            leftPanel={<ProposalEditor />}
+            leftPanel={<ProposalEditor content={null} />}
             rightPanel={<ChatPanel />}
           />
         </main>
