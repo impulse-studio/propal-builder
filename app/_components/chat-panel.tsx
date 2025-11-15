@@ -357,7 +357,6 @@ export function ChatPanel() {
     replaceSection,
     replaceContent,
     deleteText,
-    getContent,
     getJSON,
     insertPricingCard,
     insertFeatureList,

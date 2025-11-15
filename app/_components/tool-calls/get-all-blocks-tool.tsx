@@ -4,10 +4,7 @@ import { memo } from "react";
 import type { ChatUIMessage } from "@/server/routers/chat/types";
 
 interface GetAllBlocksToolProps {
-  part: Extract<
-    ChatUIMessage["parts"][number],
-    { type: "tool-getAllBlocks" }
-  >;
+  part: Extract<ChatUIMessage["parts"][number], { type: "tool-getAllBlocks" }>;
 }
 
 function GetAllBlocksToolComponent({ part }: GetAllBlocksToolProps) {
@@ -124,5 +121,3 @@ function GetAllBlocksToolComponent({ part }: GetAllBlocksToolProps) {
 }
 
 export const GetAllBlocksTool = memo(GetAllBlocksToolComponent);
-
-

@@ -108,4 +108,3 @@ function FindAndReplaceToolComponent({ part }: FindAndReplaceToolProps) {
 }
 
 export const FindAndReplaceTool = memo(FindAndReplaceToolComponent);
-

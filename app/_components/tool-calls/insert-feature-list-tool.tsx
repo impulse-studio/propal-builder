@@ -105,5 +105,3 @@ function InsertFeatureListToolComponent({ part }: InsertFeatureListToolProps) {
 }
 
 export const InsertFeatureListTool = memo(InsertFeatureListToolComponent);
-
-

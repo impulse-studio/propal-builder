@@ -101,4 +101,3 @@ function GetDocumentContentToolComponent({
 }
 
 export const GetDocumentContentTool = memo(GetDocumentContentToolComponent);
-

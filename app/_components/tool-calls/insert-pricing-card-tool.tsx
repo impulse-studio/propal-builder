@@ -136,5 +136,3 @@ function InsertPricingCardToolComponent({ part }: InsertPricingCardToolProps) {
 }
 
 export const InsertPricingCardTool = memo(InsertPricingCardToolComponent);
-
-

@@ -97,4 +97,3 @@ function DeleteTextToolComponent({ part }: DeleteTextToolProps) {
 }
 
 export const DeleteTextTool = memo(DeleteTextToolComponent);
-

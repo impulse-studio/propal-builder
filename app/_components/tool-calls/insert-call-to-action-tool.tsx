@@ -129,5 +129,3 @@ function InsertCallToActionToolComponent({
 }
 
 export const InsertCallToActionTool = memo(InsertCallToActionToolComponent);
-
-
