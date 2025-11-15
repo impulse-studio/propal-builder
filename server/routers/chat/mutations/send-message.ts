@@ -29,6 +29,14 @@ export const sendMessageHandler = sendMessageBase.handler(
         const result = streamText({
           model: "google/gemini-2.5-pro",
           messages: convertToModelMessages(messages),
+          providerOptions: {
+            google: {
+              thinkingConfig: {
+                thinkingBudget: 8192,
+                includeThoughts: true,
+              },
+            },
+          },
         });
 
         writer.merge(result.toUIMessageStream({ originalMessages: messages }));
