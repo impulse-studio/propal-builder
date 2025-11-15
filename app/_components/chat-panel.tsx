@@ -353,9 +353,7 @@ export function ChatPanel() {
                     {message.parts.map((part, partIndex) => {
                       // Handle reasoning parts
                       if (part.type === "reasoning") {
-                        const reasoningIndex = reasoningParts.findIndex(
-                          (p) => p === part,
-                        );
+                        const reasoningIndex = reasoningParts.indexOf(part);
                         const isLastReasoning =
                           reasoningIndex === reasoningParts.length - 1;
                         const isStreaming =
