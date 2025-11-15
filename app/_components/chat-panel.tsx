@@ -16,6 +16,7 @@ import {
 } from "@/components/ai/reasoning";
 import { orpcClient } from "@/orpc/client";
 import type { ChatUIMessage } from "@/server/routers/chat/types";
+import { ChatEmptyState } from "./chat-empty-state";
 import { useEditorStore } from "./editor-store";
 import { ToolCallDisplay } from "./tool-call-display";
 
@@ -437,124 +438,125 @@ export function ChatPanel() {
   return (
     <div className="flex h-full flex-col bg-bg-white-0">
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-paragraph-md text-text-soft-400">
-                Start a conversation with the AI assistant.
-              </p>
-            </div>
-          )}
-          {messages.map((message, index) => {
-            const isLastMessage = index === messages.length - 1;
-            const isTyping =
-              isLoading && isLastMessage && message.role === "assistant";
+        {messages.length === 0 ? (
+          <ChatEmptyState />
+        ) : (
+          <div className="space-y-4">
+            {messages.map((message, index) => {
+              const isLastMessage = index === messages.length - 1;
+              const isTyping =
+                isLoading && isLastMessage && message.role === "assistant";
 
-            if (message.role === "user") {
-              return (
-                <div key={message.id} className="w-full">
-                  <UserMessage message={message} />
-                </div>
-              );
-            }
+              if (message.role === "user") {
+                return (
+                  <div key={message.id} className="w-full">
+                    <UserMessage message={message} />
+                  </div>
+                );
+              }
 
-            if (message.role === "assistant") {
-              const text = getMessageText(message);
-              const reasoningParts = getReasoningParts(message);
-              const hasReasoning = reasoningParts.length > 0;
-              const lastReasoning = reasoningParts[reasoningParts.length - 1];
-              const isReasoningStreaming =
-                hasReasoning &&
-                isTyping &&
-                lastReasoning?.state === "streaming";
+              if (message.role === "assistant") {
+                const text = getMessageText(message);
+                const reasoningParts = getReasoningParts(message);
+                const hasReasoning = reasoningParts.length > 0;
+                const lastReasoning = reasoningParts[reasoningParts.length - 1];
+                const isReasoningStreaming =
+                  hasReasoning &&
+                  isTyping &&
+                  lastReasoning?.state === "streaming";
 
-              const lastReasoningTitle =
-                isReasoningStreaming && lastReasoning
-                  ? getReasoningTitle(lastReasoning.text)
-                  : undefined;
+                const lastReasoningTitle =
+                  isReasoningStreaming && lastReasoning
+                    ? getReasoningTitle(lastReasoning.text)
+                    : undefined;
 
-              // Get tool parts
-              const toolParts = message.parts.filter(
-                (part) =>
-                  part.type.startsWith("tool-") || part.type === "dynamic-tool",
-              );
+                // Get tool parts
+                const toolParts = message.parts.filter(
+                  (part) =>
+                    part.type.startsWith("tool-") ||
+                    part.type === "dynamic-tool",
+                );
 
-              return (
-                <div key={message.id} className="w-full space-y-3">
-                  {isTyping &&
-                    !hasReasoning &&
-                    !text &&
-                    toolParts.length === 0 && (
-                      <Reasoning
-                        isStreaming={true}
-                        collapsible={false}
-                        defaultOpen={false}
-                      >
-                        <ReasoningTrigger />
-                        <ReasoningContent>{""}</ReasoningContent>
-                      </Reasoning>
+                return (
+                  <div key={message.id} className="w-full space-y-3">
+                    {isTyping &&
+                      !hasReasoning &&
+                      !text &&
+                      toolParts.length === 0 && (
+                        <Reasoning
+                          isStreaming={true}
+                          collapsible={false}
+                          defaultOpen={false}
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>{""}</ReasoningContent>
+                        </Reasoning>
+                      )}
+                    {reasoningParts.map((reasoning, idx) => {
+                      const isLastReasoning = idx === reasoningParts.length - 1;
+                      const isStreaming =
+                        isReasoningStreaming && isLastReasoning;
+
+                      return (
+                        <Reasoning
+                          key={`reasoning-${idx}`}
+                          isStreaming={isStreaming}
+                          defaultOpen={false}
+                          title={
+                            isLastReasoning ? lastReasoningTitle : undefined
+                          }
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>
+                            <MarkdownRenderer typing={isStreaming} size="sm">
+                              {reasoning.text}
+                            </MarkdownRenderer>
+                          </ReasoningContent>
+                        </Reasoning>
+                      );
+                    })}
+                    {toolParts.length > 0 && (
+                      <div className="space-y-2">
+                        {toolParts.map((part, idx) => {
+                          const toolCallId =
+                            "toolCallId" in part
+                              ? part.toolCallId
+                              : `tool-${idx}`;
+                          return (
+                            <ToolCallDisplay
+                              key={`tool-${idx}-${toolCallId}`}
+                              part={part}
+                              isStreaming={isTyping}
+                            />
+                          );
+                        })}
+                      </div>
                     )}
-                  {reasoningParts.map((reasoning, idx) => {
-                    const isLastReasoning = idx === reasoningParts.length - 1;
-                    const isStreaming = isReasoningStreaming && isLastReasoning;
+                    {text && (
+                      <MarkdownRenderer typing={isTyping && !hasReasoning}>
+                        {text}
+                      </MarkdownRenderer>
+                    )}
+                  </div>
+                );
+              }
 
-                    return (
-                      <Reasoning
-                        key={`reasoning-${idx}`}
-                        isStreaming={isStreaming}
-                        defaultOpen={false}
-                        title={isLastReasoning ? lastReasoningTitle : undefined}
-                      >
-                        <ReasoningTrigger />
-                        <ReasoningContent>
-                          <MarkdownRenderer typing={isStreaming} size="sm">
-                            {reasoning.text}
-                          </MarkdownRenderer>
-                        </ReasoningContent>
-                      </Reasoning>
-                    );
-                  })}
-                  {toolParts.length > 0 && (
-                    <div className="space-y-2">
-                      {toolParts.map((part, idx) => {
-                        const toolCallId =
-                          "toolCallId" in part
-                            ? part.toolCallId
-                            : `tool-${idx}`;
-                        return (
-                          <ToolCallDisplay
-                            key={`tool-${idx}-${toolCallId}`}
-                            part={part}
-                            isStreaming={isTyping}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
-                  {text && (
-                    <MarkdownRenderer typing={isTyping && !hasReasoning}>
-                      {text}
-                    </MarkdownRenderer>
-                  )}
+              return null;
+            })}
+            {isLoading &&
+              messages.length > 0 &&
+              messages[messages.length - 1]?.role !== "assistant" && (
+                <div className="w-full">
+                  <div className="flex gap-1">
+                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.3s]" />
+                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.15s]" />
+                    <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400" />
+                  </div>
                 </div>
-              );
-            }
-
-            return null;
-          })}
-          {isLoading &&
-            messages.length > 0 &&
-            messages[messages.length - 1]?.role !== "assistant" && (
-              <div className="w-full">
-                <div className="flex gap-1">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.3s]" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400 [animation-delay:-0.15s]" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-text-soft-400" />
-                </div>
-              </div>
-            )}
-          <div ref={messagesEndRef} />
-        </div>
+              )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
       <div className="border-t border-stroke-soft-200 p-4">
         <CompactPromptForm
