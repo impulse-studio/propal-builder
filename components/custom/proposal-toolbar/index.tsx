@@ -10,6 +10,7 @@ import { ItalicButton } from "../floating-toolbar/italic-button";
 import { NumberedListButton } from "../floating-toolbar/numbered-list-button";
 import { StrikethroughButton } from "../floating-toolbar/strikethrough-button";
 import { UnderlineButton } from "../floating-toolbar/underline-button";
+import { BlockMenu } from "./block-menu";
 import { HeadingButton } from "./heading-button";
 
 type ProposalToolbarProps = {
@@ -78,6 +79,12 @@ export function ProposalToolbar({ editor }: ProposalToolbarProps) {
 
       {/* Blockquote group */}
       <BlockquoteButton editor={editor} />
+
+      {/* Divider */}
+      <div className="mx-1 h-6 w-px bg-stroke-soft-200" />
+
+      {/* Blocks group */}
+      <BlockMenu editor={editor} />
     </div>
   );
 }
