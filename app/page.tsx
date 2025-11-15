@@ -1,5 +1,6 @@
 import { ResizableLayout } from "@/components/custom/resizable-layout";
 import Header from "@/components/header";
+import { ChatPanel } from "./_components/chat-panel";
 
 export default function Home() {
   return (
@@ -14,13 +15,7 @@ export default function Home() {
               </p>
             </div>
           }
-          rightPanel={
-            <div className="flex h-full items-center justify-center bg-bg-white-0">
-              <p className="text-paragraph-md text-text-soft-400">
-                Ici il y aura un agent avec un chat.
-              </p>
-            </div>
-          }
+          rightPanel={<ChatPanel />}
         />
       </main>
     </div>
