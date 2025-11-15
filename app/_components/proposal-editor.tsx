@@ -22,7 +22,6 @@ import {
 } from "@/components/custom/proposal-toolbar/slash-cmd";
 import { SlashCommandProvider } from "@/components/custom/proposal-toolbar/slash-command-provider";
 import { cn } from "@/lib/utils";
-import { OfficialDragHandle } from "@/lib/utils/tiptap/drag-handle-extension";
 import { PasteDropExtension } from "@/lib/utils/tiptap/paste-drop-extension";
 import { ResizableImageExtension } from "@/lib/utils/tiptap/resizable-image-extension";
 import { SlashExtension } from "@/lib/utils/tiptap/slash-extension";
@@ -102,7 +101,6 @@ function ProposalEditorContent() {
           genericError: "Failed to upload image",
         },
       }),
-      OfficialDragHandle,
       MarkdownShortcuts,
       PricingCard,
       FeatureList,
@@ -152,15 +150,8 @@ function ProposalEditorContent() {
 
   return (
     <div className="flex h-full flex-col bg-bg-white-0">
-      <div
-        className={cn(
-          "flex w-full flex-col rounded-xl bg-bg-white-0 pb-4 shadow-regular-xs",
-          "ring-1 ring-stroke-soft-200 ring-inset transition duration-200 ease-out",
-          "focus-within:shadow-button-important-focus focus-within:ring-stroke-strong-950",
-          "h-full flex flex-col",
-        )}
-      >
-        <div className="border-b border-stroke-soft-200 p-3">
+      <div className="flex w-full flex-col h-full">
+        <div className="p-3">
           <ProposalToolbar editor={editor} />
         </div>
 

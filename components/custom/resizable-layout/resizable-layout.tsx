@@ -92,7 +92,7 @@ const ResizableLayout = forwardRef<HTMLDivElement, ResizableLayoutProps>(
             ref={resizeRef}
             type="button"
             className={cn(
-              "group relative z-10 flex w-1 cursor-col-resize items-center justify-center border-0 bg-stroke-soft-200 p-0 transition-colors duration-200 ease-out",
+              "group relative z-10 flex w-px cursor-col-resize items-center justify-center border-0 bg-stroke-soft-200 p-0 transition-colors duration-200 ease-out",
               "hover:bg-stroke-strong-400",
               isResizing && "bg-stroke-strong-600",
             )}
