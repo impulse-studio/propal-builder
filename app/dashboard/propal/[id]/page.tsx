@@ -1,8 +1,7 @@
 import { Suspense } from "react";
-import { SlashCommandProvider } from "@/components/custom/proposal-toolbar/slash-command-provider";
 import { orpc } from "@/orpc/client";
 import { getQueryClient, HydrateClient } from "@/orpc/query/hydration";
-import { TiptapEditorWithSlashCommands } from "./_components/propal-editor";
+import { PropalPageClient } from "./page.client";
 
 export default async function PropalPage({
   params,
@@ -20,9 +19,7 @@ export default async function PropalPage({
   return (
     <HydrateClient client={queryClient}>
       <Suspense fallback={<div>Loading propal...</div>}>
-        <SlashCommandProvider>
-          <TiptapEditorWithSlashCommands propalId={id} />
-        </SlashCommandProvider>
+        <PropalPageClient propalId={id} />
       </Suspense>
     </HydrateClient>
   );

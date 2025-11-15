@@ -28,12 +28,12 @@ import { SlashExtension } from "@/lib/utils/tiptap/slash-extension";
 import { uploadEditorImage } from "@/lib/utils/tiptap/upload-image";
 import { useEditorStore } from "./editor-store";
 
-function ProposalEditorContent() {
+function ProposalEditorContent({ content }: { content: unknown }) {
   const slashCommandRef = useSlashCommandExtension();
   const { setEditor } = useEditorStore();
 
   const editor = useEditor({
-    content: "",
+    content: content || "",
     immediatelyRender: false,
     editable: true,
     extensions: [
@@ -172,10 +172,10 @@ function ProposalEditorContent() {
   );
 }
 
-export function ProposalEditor() {
+export function ProposalEditor({ content }: { content: unknown }) {
   return (
     <SlashCommandProvider>
-      <ProposalEditorContent />
+      <ProposalEditorContent content={content} />
     </SlashCommandProvider>
   );
 }
