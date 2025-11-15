@@ -28,7 +28,7 @@ import { SlashExtension } from "@/lib/utils/tiptap/slash-extension";
 import { uploadEditorImage } from "@/lib/utils/tiptap/upload-image";
 import { useEditorStore } from "./editor-store";
 
-function ProposalEditorContent({ content }: { content: unknown }) {
+function ProposalEditorContent({ content }: { content?: unknown }) {
   const slashCommandRef = useSlashCommandExtension();
   const { setEditor } = useEditorStore();
 
@@ -172,7 +172,7 @@ function ProposalEditorContent({ content }: { content: unknown }) {
   );
 }
 
-export function ProposalEditor({ content }: { content: unknown }) {
+export function ProposalEditor({ content }: { content?: unknown }) {
   return (
     <SlashCommandProvider>
       <ProposalEditorContent content={content} />
