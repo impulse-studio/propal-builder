@@ -1,0 +1,1 @@
+ALTER TABLE "propals" ADD COLUMN "qdrant_collection_id" text NOT NULL;
