@@ -5,6 +5,7 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.url(),
     NODE_ENV: z.enum(["development", "production"]),
+    ELEVENLABS_API_KEY: z.string(),
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
     VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
