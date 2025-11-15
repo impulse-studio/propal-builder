@@ -92,7 +92,6 @@ export function StaggeredFadeLoader({
           animate="visible"
           className={dot()}
           initial="hidden"
-          // biome-ignore lint/suspicious/noArrayIndexKey: Static loader dots, order never changes
           key={index}
           transition={{
             duration: 0.5,

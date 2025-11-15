@@ -31,9 +31,7 @@ const SlashCommandContext = React.createContext<
 export const useSlashCommand = () => {
   const context = React.useContext(SlashCommandContext);
   if (!context) {
-    throw new Error(
-      "useSlashCommand must be used within SlashCommandProvider",
-    );
+    throw new Error("useSlashCommand must be used within SlashCommandProvider");
   }
   return context;
 };
@@ -47,9 +45,7 @@ export const SlashCommandProvider: React.FC<SlashCommandProviderProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
-  const [range, setRange] = useState<{ from: number; to: number } | null>(
-    null,
-  );
+  const [range, setRange] = useState<{ from: number; to: number } | null>(null);
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState<{
     top: number;
@@ -118,4 +114,3 @@ export const SlashCommandProvider: React.FC<SlashCommandProviderProps> = ({
     </SlashCommandContext.Provider>
   );
 };
-

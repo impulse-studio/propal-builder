@@ -101,17 +101,7 @@ export const OfficialDragHandle = DragHandle.configure({
     return element;
   },
 
-  tippyOptions: {
+  computePositionConfig: {
     placement: "left-start",
-    offset: [4, 28],
-    duration: [200, 0],
-    animation: "fade",
-    hideOnClick: false,
-    interactive: true,
-    getReferenceClientRect: () =>
-      document
-        .querySelector(".drag-handle-container")
-        ?.getBoundingClientRect() || new DOMRect(),
   },
 });
-
