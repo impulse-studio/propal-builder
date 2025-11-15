@@ -27,8 +27,10 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         <Tooltip.Trigger asChild>
           <Button.Root
             className={cn(
-              "size-9",
-              isActive ? "bg-bg-weak-50" : "bg-transparent",
+              "size-9 transition-colors",
+              isActive
+                ? "bg-primary-alpha-10 text-primary-base"
+                : "bg-transparent text-text-sub-600 hover:text-text-strong-950",
             )}
             mode="ghost"
             onMouseDown={preventDefault(onClick)}

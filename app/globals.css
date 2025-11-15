@@ -751,3 +751,58 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror h1 {
+  font-size: var(--text-title-h1);
+  line-height: var(--text-title-h1--line-height);
+  font-weight: var(--text-title-h1--font-weight);
+  letter-spacing: var(--text-title-h1--letter-spacing);
+  color: var(--color-text-strong-950);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-family: inherit;
+}
+
+.ProseMirror h2 {
+  font-size: var(--text-title-h2);
+  line-height: var(--text-title-h2--line-height);
+  font-weight: var(--text-title-h2--font-weight);
+  letter-spacing: var(--text-title-h2--letter-spacing);
+  color: var(--color-text-strong-950);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-family: inherit;
+}
+
+.ProseMirror h3 {
+  font-size: var(--text-title-h3);
+  line-height: var(--text-title-h3--line-height);
+  font-weight: var(--text-title-h3--font-weight);
+  letter-spacing: var(--text-title-h3--letter-spacing);
+  color: var(--color-text-strong-950);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-family: inherit;
+}
+
+.ProseMirror p {
+  font-size: var(--text-paragraph-sm);
+  line-height: var(--text-paragraph-sm--line-height);
+  color: var(--color-text-strong-950);
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-family: inherit;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-sub-600);
+  pointer-events: none;
+  height: 0;
+}
