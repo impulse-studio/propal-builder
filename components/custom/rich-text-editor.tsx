@@ -129,7 +129,7 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         <div
           className={cn(
             "block w-full resize-none text-paragraph-sm text-text-strong-950 outline-none",
-            "pointer-events-auto h-full min-h-[82px] bg-transparent pt-2.5 pr-2.5 pl-3",
+            "pointer-events-auto h-full min-h-[82px] bg-transparent pt-2.5 px-6",
             "min-h-[100px] overflow-auto",
             editorContentClassName,
           )}

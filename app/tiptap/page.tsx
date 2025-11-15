@@ -144,7 +144,7 @@ function TiptapEditorWithSlashCommands() {
               "flex w-full flex-col rounded-xl bg-bg-white-0 pb-4 shadow-regular-xs",
               "ring-1 ring-stroke-soft-200 ring-inset transition duration-200 ease-out",
             )}
-            editorContentClassName={cn("min-h-[400px] pl-32 pr-6 pt-6")}
+            editorContentClassName={cn("min-h-[400px] pt-6")}
             editorOverlays={
               editor ? (
                 <SlashCmdRoot editor={editor}>
